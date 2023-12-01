@@ -21,7 +21,7 @@ const OrganizationFields = (props) => {
     })
     .then((res) => res.json())
     .then((data) => {
-        //if (search) data = data.filter((i) => i.contactName.includes(search));
+        //if (nip) data = data.filter((i) => i.contactName.includes(nip));
         setVisibility(data);
     })
     .catch((error) => {

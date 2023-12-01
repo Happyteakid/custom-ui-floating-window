@@ -19,13 +19,37 @@ export const initAPIClient = ({ accessToken = '', refreshToken = '' }) => {
   return client;
 };
 
+// Safely parse JSON
+const safeParseJSON = (jsonString) => {
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    return null;
+  }
+};
+
 // Gets the API client based on session cookies
 export const getAPIClient = (req, res) => {
-  const session = getCookie('session', { req, res });
+  const sessionCookie = getCookie('session', { req, res });
+
+  // Check if the session cookie exists and has a value
+  if (!sessionCookie) {
+    // Handle the absence of a session cookie appropriately
+    throw new Error('Session cookie is missing');
+  }
+
+  // Safely parse the session cookie
+  const session = safeParseJSON(sessionCookie);
+  if (!session || !session.token) {
+    // Handle invalid or incomplete session data appropriately
+    throw new Error('Invalid session data');
+  }
+
   return initAPIClient({
-    accessToken: JSON.parse(session).token,
+    accessToken: session.token,
   });
 };
+
 
 // Generate the authorization URL for the 1st step
 export const getAuthorizationUrl = (client) => {

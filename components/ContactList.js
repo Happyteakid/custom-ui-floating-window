@@ -32,18 +32,18 @@ const ContactList = (props) => {
       <div className="row">
         <nav className="navbar navbar-light bg-mildgreen">
           <div className="container-fluid">
-            <span className="navbar-brand"> 🟢 Hello, {props.user.name} </span>
+            <span className="navbar-brand"> 🟢 Witaj, {props.user.name} </span>
           </div>
         </nav>
-        <p> Search and Tap on a contact name to dial </p>
+        <p> Wpisz NIP organizacji </p>
         <div className="input-group mb-3">
-          <span className="input-group-text" id="basic-addon1">
-            🔍
-          </span>
+          <button className=''>
+          🔍
+          </button>
           <input
             type="text"
             className="form-control"
-            placeholder="Type the name of the contact"
+            placeholder="10-cyfrowy NIP organizacji"
             onChange={(e) => performSearch(e)}
           />
         </div>

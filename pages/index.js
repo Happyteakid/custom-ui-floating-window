@@ -9,6 +9,7 @@ import { getCustomUISDK } from "../shared/custom_ui_sdk";
 import { handleSocketCommunication } from "../shared/socket";
 
 import ContactList from "../components/ContactList";
+import OrganizationFields from "../components/OrganizationFields";
 import Dialer from "../components/Dialer";
 import FollowUp from "../components/FollowUp";
 import Login from "../components/Login";
@@ -54,7 +55,7 @@ const Home = ({ auth, session }) => {
 
   switch (context.callerState) {
     case "listening": {
-      return <ContactList {...context} />;
+      return <OrganizationFields {...context} />;
     }
     case "ringing":
     case "connected": {
@@ -64,7 +65,7 @@ const Home = ({ auth, session }) => {
       return <FollowUp {...context} />;
     }
     default:
-      return <ContactList {...context} />;
+      return <OrganizationFields {...context} />;
   }
 };
 

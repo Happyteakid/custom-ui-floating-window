@@ -4,8 +4,7 @@ const Footer = () => {
     return (
       <div className="alert alert-light text-center note">
         <small>
-          Since this is a demo app, no real calls will be placed.You can
-          however, fake the interactions using the control centre
+          Po wpisaniu kodu NIP, kliknij wyszukaj. Na jego podstawie zostanie wyszukany podmiot gospodarki narodowej w GUS.
         </small>
       </div>
     );

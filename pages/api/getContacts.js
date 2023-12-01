@@ -12,10 +12,11 @@ const handler = async (req, res) => {
     log.info('Initializing client');
     const api = new PersonsApi(client);
 
-    log.info('Getting all persons');
+    log.info('Getting all organizations');
     const contactObj = await api.getPersons();
-
+    
     // Filter only those that have phone number
+    
     log.info('Filtering persons by phone');
     const contacts = contactObj.data
       .filter((person) => {
@@ -29,6 +30,7 @@ const handler = async (req, res) => {
           direction: 'out',
         };
       });
+      
     log.info('Returning response');
     res.status(200).json(contacts);
   } catch (error) {

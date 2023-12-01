@@ -81,3 +81,11 @@ img {
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
 }
+
+.custom-hr {
+  margin-left: 12px;
+}
+
+.form-control.user-input{
+  margin-bottom: 1rem;
+}

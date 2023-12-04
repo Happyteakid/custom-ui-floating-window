@@ -12,23 +12,43 @@ const handler = async (req, res) => {
   try {
     log.info('Starting function');
     const axios = require('axios');
+    const gusToken = process.env.API_REGON;
+    const url = 'https://wyszukiwarkaregontest.stat.gov.pl/wsBIR/UslugaBIRzewnPubl.svc';
 
-    const xmlBody = `
-      <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-        xmlns:web="http://webService/">
-        <soapenv:Header/>
-        <soapenv:Body>
-          <web:YourOperation>
-            <!--Optional:-->
-            <nip>your-nip-value</nip>
-          </web:YourOperation>
-        </soapenv:Body>
-        </soapenv:Envelope>`;
+    var xmlBody =
+      '  <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:ns="http://CIS/BIR/PUBL/2014/07">' +
+      ' <soap:Header xmlns:wsa="http://www.w3.org/2005/08/addressing">' +
+      '<wsa:To>https://wyszukiwarkaregontest.stat.gov.pl/wsBIR/UslugaBIRzewnPubl.svc</wsa:To>' +
+      '<wsa:Action>http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/Zaloguj</wsa:Action>' +
+      '</soap:Header>' +
+      '<soap:Body>' +
+      '<ns:Zaloguj>' +
+      ' <ns:pKluczUzytkownika>' + gusToken + '</ns:pKluczUzytkownika>' +
+      '</ns:Zaloguj>' +
+      '</soap:Body>' +
+      '</soap:Envelope>';
 
-    axios.post('https://your-soap-api-endpoint', xmlBody, {
+    var xmlRequest =
+      '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:ns="http://CIS/BIR/PUBL/2014/07" xmlns:dat="http://CIS/BIR/PUBL/2014/07/DataContract">' +
+      ' <soap:Header xmlns:wsa="http://www.w3.org/2005/08/addressing">' +
+      ' <wsa:To>https://wyszukiwarkaregon.stat.gov.pl/wsBIR/UslugaBIRzewnPubl.svc</wsa:To>' +
+      ' <wsa:Action>http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DaneSzukajPodmioty</wsa:Action>' +
+      ' </soap:Header>' +
+      ' <soap:Body>' +
+      ' <ns:DaneSzukajPodmioty>' +
+      ' <ns:pParametryWyszukiwania>' +
+      ' <dat:Nip>5860062842</dat:Nip>' +
+      ' </ns:pParametryWyszukiwania>' +
+      ' </ns:DaneSzukajPodmioty>' +
+      ' </soap:Body>' +
+      '</soap:Envelope>'
+      ;
+
+    log.info('gus token: ' + gusToken);
+
+    axios.post(url, xmlBody, {
       headers: {
-        'Content-Type': 'text/xml;charset=UTF-8',
-        'SOAPAction': 'your-SOAP-action-if-required'
+        'Content-Type': 'application/soap+xml;charset=UTF-8'
       }
     })
       .then(response => {
@@ -38,12 +58,25 @@ const handler = async (req, res) => {
         console.error('Error:', error);
       });
 
-
+      /*
+    axios.post(url, xmlRequest, {
+      headers: {
+        'Content-Type': 'application/soap+xml;charset=UTF-8',
+        'SOAPAction': 'DanePobierzPelnyRaport'
+        //'SOAPAction': 'http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/DanePobierzPelnyRaport'
+      }
+    })
+      .then(response => {
+        console.log('Response:', response.data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+*/
 
     log.info('Returning response');
-    res.status(200).json(organization);
+    res.status(200).json(null);
   } catch (error) {
-    log.info('Failed getting organizations');
     log.error(error);
     res.status(500).json({ success: false, data: error });
   }

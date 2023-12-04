@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { startOutgoingCall } from '../shared/socket';
 import Footer from './Footer';
-import { isValidNip, soap } from '../shared/functions';
+import { isValidNip } from '../shared/functions';
 import { Html } from 'next/document';
 
 // Shows the contacts in Pipedrive with an ability to filter
@@ -46,7 +46,7 @@ const OrganizationFields = (props) => {
     } else {
       setOrganizationExists(false);
       setDisabledNip(nip);
-      soap(nip);
+      getApiRegonOrg();
       setAdressField('Bystra 15A, Poznań 61-874');
       setOrgNameField('TUBES INTERNATIONAL SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ');
     }
@@ -79,6 +79,18 @@ const OrganizationFields = (props) => {
     }
   };
 
+  function getApiRegonOrg(){
+    console.log("getApiRegonOrg called");
+    fetch('/api/getAPIREGON', {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+      type: 'application/json'
+    });
+
+  }
   const performSearch = () => {
     console.log('User input(nip): ' + nip);
     if (!isValidNip(nip)) {
@@ -90,7 +102,7 @@ const OrganizationFields = (props) => {
       console.log('NIP is correct');
       setIsNipValid(true); // Set to true if NIP is valid
       getOrganization(nip);
-
+      getApiRegonOrg();
       return;
     }
   };

@@ -54,4 +54,4 @@ export function soap(nip) {
 
 
 
-export default {isValidNip, soap};
+export default {isValidNip};

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { startOutgoingCall } from '../shared/socket';
 import Footer from './Footer';
 import {isValidNip} from '../shared/functions';
+import { Html } from 'next/document';
 
 // Shows the contacts in Pipedrive with an ability to filter
 const OrganizationFields = (props) => {
@@ -11,6 +12,10 @@ const OrganizationFields = (props) => {
   const [contacts, setContacts] = useState([]);
   const [nip, setNip] = useState('');  // State to manage the NIP input value
   const [isNipValid, setIsNipValid] = useState(true);
+  const [organizationExists, setOrganizationExists] = useState(true);
+  const [disabledNip, setDisabledNip] = useState('');
+  const [adressField, setAdressField] = useState('');
+  const [orgNameField, setOrgNameField] = useState('');
 
   async function getOrganization(nip) {
     fetch('/api/getOrganization', {
@@ -21,7 +26,7 @@ const OrganizationFields = (props) => {
     })
     .then((res) => res.json())
     .then((data) => {
-        //if (nip) data = data.filter((i) => i.contactName.includes(nip));
+        data = data.filter((org) => org["7b4ee6ab150271090998e28fcdf397f97b842435"] == nip);
         setVisibility(data);
     })
     .catch((error) => {
@@ -29,9 +34,40 @@ const OrganizationFields = (props) => {
     });
   }
   
+  useEffect(() => {
+    setOrganizationExists(false);
+  },[]);
 
 function setVisibility(data){
-console.log(data);
+  console.log(data);
+  //Checks if any object with the given NIP exists in Pipedrive; If so, set the error message visibility to true
+  if(data.length > 0){
+    setOrganizationExists(true);
+  } else { 
+    setOrganizationExists(false);
+    setDisabledNip(nip);
+    setAdressField('Bystra 15A, Poznań 61-874');
+    setOrgNameField('TUBES INTERNATIONAL SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ');
+  }
+}
+
+function createOrganization(){
+
+  let preparedJsonBody = JSON.stringify({"name": orgNameField,
+  "address": adressField,
+  "7b4ee6ab150271090998e28fcdf397f97b842435": nip})
+
+  console.log(preparedJsonBody);
+
+  fetch('/api/postOrganization', {
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+    type: 'application/json',
+    body: preparedJsonBody
+  })
 }
 
   const performSearch = () => {
@@ -39,13 +75,13 @@ console.log(data);
     if(!isValidNip(nip)){
       console.log('NIP is not correct');
       setIsNipValid(false); // Set to false if NIP is invalid
+      setOrganizationExists(false); // Set to false if NIP is invalid
       return;
     } else{
       console.log('NIP is correct');
       setIsNipValid(true); // Set to true if NIP is valid
-      if(isNipValid){
-        getOrganization(nip);
-      }
+      getOrganization(nip);
+      
       return;
     }
   };
@@ -73,18 +109,19 @@ console.log(data);
           />
         </div>
         {!isNipValid && <p className="text-danger">Błąd: Nieprawidłowy NIP.</p>}
+        {organizationExists && <p className="text-danger">Organizacja o podanym numerze NIP już istnieje!</p>}
         <hr className='custom-hr'/>
         <div className='row m-2'>
           <p>Nazwa organizacji:</p>
-          <input type='text' className='form-control user-input'/>
+          <input type='text' value={orgNameField} onChange={(e) => setOrgNameField(e.target.value)} className='form-control user-input'/>
           <p>Adres:</p>
-          <input type='text' className='form-control user-input'/>
+          <input type='text' value={adressField} onChange={(e) => setAdressField(e.target.value)} className='form-control user-input'/>
           <p>NIP:</p>
-          <input type='number' className='form-control user-input'/>
+          <input type='number' id='submitedNip' readOnly value={disabledNip} disabled className='form-control user-input'/>
         </div>
         <div className="row p-2">
           <div className="d-flex justify-content-end">
-            <button type='button' className='btn btn-primary'>Utwórz organizację</button>
+            <button type='button' className='btn btn-primary' onClick={createOrganization}>Utwórz organizację</button>
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@
   "dependencies": {
     "@pipedrive/app-extensions-sdk": "^0.6.0",
     "@prisma/client": "^4.6.1",
+    "axios": "^1.6.2",
     "bootstrap": "^5.2.3",
     "cookies-next": "^2.1.1",
     "eslint-config-next": "13.0.5",

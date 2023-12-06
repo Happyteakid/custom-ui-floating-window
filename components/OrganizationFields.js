@@ -80,14 +80,18 @@ const OrganizationFields = (props) => {
   };
 
   function getApiRegonOrg(){
+    let nipJson = JSON.stringify({
+      "nip": nip
+    })
     console.log("getApiRegonOrg called");
     fetch('/api/getAPIREGON', {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      method: 'GET',
-      type: 'application/json'
+      method: 'POST',
+      type: 'application/json',
+      body: nipJson
     });
 
   }

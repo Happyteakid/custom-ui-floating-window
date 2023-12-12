@@ -53,20 +53,8 @@ const Home = ({ auth, session }) => {
     return <Login />;
   }
 
-  switch (context.callerState) {
-    case "listening": {
-      return <OrganizationFields {...context} />;
-    }
-    case "ringing":
-    case "connected": {
-      return <Dialer {...context} />;
-    }
-    case "disconnected": {
-      return <FollowUp {...context} />;
-    }
-    default:
-      return <OrganizationFields {...context} />;
-  }
+  return <OrganizationFields {...context} />;
+
 };
 
 export default Home;

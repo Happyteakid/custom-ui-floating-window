@@ -28,16 +28,21 @@ const handler = async (req, res) => {
 
       console.log("login GUS sessionID: ", gus.getSessionId());
       gus.findByNip(req.body.nip).then(async function(findCompanyByNip) {
+        console.log('findCompanyByNip: ', findCompanyByNip);
           var companyRegon = findCompanyByNip.Regon; // get regon from previous query
           await gus.getFullReport(companyRegon, findCompanyByNip.Typ, findCompanyByNip.SilosID).then(function(fullReport) {
-            console.log('Company Regon: ', companyRegon);
-              console.log('fullReport: ', fullReport);
+            //console.log('Company Regon: ', companyRegon);
+            //  console.log('fullReport: ', fullReport);
               let extractedData = {
-                praw_nazwa: fullReport.praw_nazwa[0],
-                praw_adSiedzKodPocztowy: fullReport.praw_adSiedzKodPocztowy[0],
-                praw_adSiedzMiejscowosc_Nazwa: fullReport.praw_adSiedzMiejscowosc_Nazwa[0]
+                nazwa: findCompanyByNip.Nazwa[0],
+                kodPocztowy: findCompanyByNip.KodPocztowy[0],
+                miejscowosc: findCompanyByNip.Miejscowosc[0],
+                ulica: findCompanyByNip.Ulica[0],
+                nrNieruchomosci: findCompanyByNip.NrNieruchomosci[0],
+                nrLokalu: findCompanyByNip.NrLokalu[0]
               };
               let jsonString = JSON.stringify(extractedData);
+              console.log(jsonString);
               res.status(200).json(jsonString);
               gus.logout();
           });

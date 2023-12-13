@@ -4,18 +4,19 @@ import { startOutgoingCall } from '../shared/socket';
 import Footer from './Footer';
 import { isValidNip } from '../shared/functions';
 import { Html } from 'next/document';
+import { HttpStatusCode } from 'axios';
 
 // Shows the contacts in Pipedrive with an ability to filter
 const OrganizationFields = (props) => {
-  const router = useRouter();
-  const [search, setSearch] = useState('');
-  const [contacts, setContacts] = useState([]);
   const [nip, setNip] = useState('');  // State to manage the NIP input value
   const [isNipValid, setIsNipValid] = useState(true);
   const [organizationExists, setOrganizationExists] = useState(false);
   const [disabledNip, setDisabledNip] = useState('');
   const [adressField, setAdressField] = useState('');
   const [orgNameField, setOrgNameField] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [orgCreated, setOrgCreated] = useState(false);
+  const [orgCreationError, setOrgCreationError] = useState(false);
 
   async function getOrganization(nip) {
     return new Promise((resolve, reject) => {
@@ -27,9 +28,13 @@ const OrganizationFields = (props) => {
       })
         .then((res) => res.json())
         .then((data) => {
+          if(data != undefined) {
           data = data.filter((org) => org["7b4ee6ab150271090998e28fcdf397f97b842435"] == nip);
           setVisibility(data);
           resolve(data.length > 0); // resolve with true if organization exists
+          } else { 
+            console.log("Data is undefined");
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -51,6 +56,9 @@ const OrganizationFields = (props) => {
   }
 
   async function createOrganization() {
+    
+    if(isCreating) return; // Prevent function execution if already creating
+    setIsCreating(true); // Disable the button
     if (isValidNip(nip)) {
       console.log('createOrganization: NIP is correct');
       const orgExists = await getOrganization(nip);
@@ -72,13 +80,30 @@ const OrganizationFields = (props) => {
           method: 'POST',
           type: 'application/json',
           body: preparedJsonBody
+        }).then((res) => {
+          console.log("Response post:");
+          console.log(res);
+          res.json();
+          if(res.status == 200) {
+            console.log('Organization created successfully');
+            setOrgCreated(true);
+            setOrgCreationError(false);
+          } else { 
+            setOrgCreated(false);
+            setOrgCreationError(true);
+           }
         })
+        .catch((error) => {console.log(error)})
+        .finally(() =>{
+          setIsCreating(false);
+        });
       } else {
         console.log('Organization already exists');
-        console.log("org exists2:" + organizationExists);
+        setIsCreating(false);
       }
     } else {
       console.log("createOrganization: NIP is not correct");
+      setIsCreating(false);
     }
 
   };
@@ -134,6 +159,8 @@ const OrganizationFields = (props) => {
     setDisabledNip('');
     setAdressField('');
     setOrgNameField('');
+    setOrgCreated(false);
+    setOrgCreationError(false);
   }
 
   return (
@@ -160,6 +187,8 @@ const OrganizationFields = (props) => {
         </div>
         {!isNipValid && <p className="text-danger">Błąd: Nieprawidłowy NIP.</p>}
         {organizationExists && <p className="text-danger">Organizacja o podanym numerze NIP już istnieje!</p>}
+        {orgCreated && <p className="text-success">Organizacja została utworzona.</p>}
+        {orgCreationError && <p className="text-danger">Błąd podczas tworzenia organizacji.</p>}
         <hr className='custom-hr' />
         <div className='row m-2'>
           <p>Nazwa organizacji:</p>
@@ -172,7 +201,7 @@ const OrganizationFields = (props) => {
         <div className="row p-2">
           <div className="d-flex justify-content-end">
             <button type='button' className='btn btn-light m-2' onClick={clearFields}>Wyczyść pola</button>
-            <button type='button' className='btn btn-primary m-2' onClick={createOrganization}>Utwórz organizację</button>
+            <button type='button' className='btn btn-primary m-2' onClick={createOrganization} disabled={isCreating} >Utwórz organizację</button>
           </div>
         </div>
       </div>

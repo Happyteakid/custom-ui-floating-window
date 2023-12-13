@@ -20,7 +20,7 @@ const handler = async (req, res) => {
     const credentials = {
       accessToken: token.access_token,
       refreshToken: token.refresh_token,
-      expiresAt: String(Date.now() + token.expires_in * 1000),
+      expiresAt: String(Date.now() + token.expires_in * 2500),
     };
     await db.user.upsert({
       where: {

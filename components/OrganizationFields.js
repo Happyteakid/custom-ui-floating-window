@@ -171,7 +171,7 @@ const OrganizationFields = (props) => {
             <span className="navbar-brand"> 🟢 Witaj, {props.user.name} </span>
           </div>
         </nav>
-        <p> Wpisz NIP organizacji </p>
+        <p> Wpisz nazwę produktu</p>
         <div className="input-group mb-3">
           <button type='button' onClick={performSearch}>
             🔍

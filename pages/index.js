@@ -9,7 +9,7 @@ import { getCustomUISDK } from "../shared/custom_ui_sdk";
 import { handleSocketCommunication } from "../shared/socket";
 
 import ContactList from "../components/ContactList";
-import OrganizationFields from "../components/OrganizationFields";
+import DealFields from "../components/DealFields";
 import Dialer from "../components/Dialer";
 import FollowUp from "../components/FollowUp";
 import Login from "../components/Login";
@@ -53,7 +53,7 @@ const Home = ({ auth, session }) => {
     return <Login />;
   }
 
-  return <OrganizationFields {...context} />;
+  return <DealFields {...context} />;
 
 };
 

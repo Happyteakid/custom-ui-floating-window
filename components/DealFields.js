@@ -7,7 +7,7 @@ import { Html } from 'next/document';
 import { HttpStatusCode } from 'axios';
 
 // Shows the contacts in Pipedrive with an ability to filter
-const OrganizationFields = (props) => {
+const DealFields = (props) => {
   const [nip, setNip] = useState('');  // State to manage the NIP input value
   const [isNipValid, setIsNipValid] = useState(true);
   const [organizationExists, setOrganizationExists] = useState(false);
@@ -18,6 +18,31 @@ const OrganizationFields = (props) => {
   const [orgCreated, setOrgCreated] = useState(false);
   const [orgCreationError, setOrgCreationError] = useState(false);
 
+  /*PART ADDED NEW 11.03.2024*/
+  const router = useRouter();
+  const [search, setSearch] = useState('');
+  const [deals, setDeals] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/getDeals', {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data)
+        if (search) data = data.filter((i) => i.title.includes(search));
+        setDeals(data);
+      });
+  }, [router, search]);
+
+  const performSearch = (e) => {
+    setSearch(e.target.value);
+  };
+
+/* */
   async function getOrganization(nip) {
     return new Promise((resolve, reject) => {
       fetch('/api/getOrganization', {
@@ -108,60 +133,23 @@ const OrganizationFields = (props) => {
 
   };
 
-  async function getApiRegonOrg() {
-    let nipJson = JSON.stringify({ "nip": nip });
-    console.log("getApiRegonOrg called");
-
-    var res = await fetch('/api/getAPIREGON', {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      type: 'application/json',
-      body: nipJson
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP error! Status: ${res.status}`);
-    }
-    let responseText = await res.text();
-    let firstParse = JSON.parse(responseText); // First parse to convert stringified JSON to JSON
-    let parsedData = JSON.parse(firstParse);
-    console.log("Response data:", parsedData);
-
-    setOrgNameField(parsedData.nazwa);
-    setAdressField(parsedData.ulica + ' ' + parsedData.nrLokalu + ' ' + parsedData.nrNieruchomosci + ' ' + parsedData.miejscowosc + ' ' + parsedData.kodPocztowy);
-  }
-
-  const performSearch = async () => {
-    console.log('User input(nip): ' + nip);
-    if (!isValidNip(nip)) {
-      console.log('performSearch: NIP is not correct');
-      setIsNipValid(false); // Set to false if NIP is invalid
-      setOrganizationExists(false); // Set to false if NIP is invalid
-      return;
-    } else {
-      console.log('performSearch: NIP is correct');
-      setIsNipValid(true); // Set to true if NIP is valid
-      var x = await getOrganization(nip);
-      if (!organizationExists) {
-        await getApiRegonOrg();
-      }
-      return;
-    }
-  };
 
   function clearFields() {
-    setNip('');
-    setOrganizationExists(false);
-    setIsNipValid(true);
-    setDisabledNip('');
-    setAdressField('');
-    setOrgNameField('');
-    setOrgCreated(false);
-    setOrgCreationError(false);
+    console.log('clearFields');
   }
+
+  // Assume we have a state to manage selected products
+const [selectedProducts, setSelectedProducts] = useState([]);
+
+
+// Handle checkbox change
+const handleCheckboxChange = (product) => {
+  if (selectedProducts.includes(product.id)) {
+    setSelectedProducts(selectedProducts.filter(id => id !== product.id));
+  } else {
+    setSelectedProducts([...selectedProducts, product.id]);
+  }
+};
 
   return (
     <div className="container-fluid">
@@ -171,39 +159,59 @@ const OrganizationFields = (props) => {
             <span className="navbar-brand"> 🟢 Witaj, {props.user.name} </span>
           </div>
         </nav>
-        <p> Wpisz nazwę produktu</p>
+        <p> Wpisz tytuł szansy sprzedaży</p>
         <div className="input-group mb-3">
-          <button type='button' onClick={performSearch}>
+          {/*<button type='button' onClick={performSearch}>
+            🔍
+  </button>*/}
+          <input
+            type="string"
+            className="form-control"
+            placeholder="Tytuł szansy sprzedaży"
+            onChange={(e) => performSearch(e)}
+            id='dealUserInput'
+          />
+        </div>
+        <ol className="contact-list list-group">
+          {/* List the deals based on the API response */}
+          {deals.map((d) => (
+            <li
+              key={d.id}
+              className="list-group-item d-flex justify-content-between align-items-start"
+            >
+              <div>
+                <div className="ms-2 me-auto">
+                  <div className="fw-bold">{d.id}| {d.title} - wartość: {d.formatted_value}</div>
+                  {d.orgName}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+        {/*<p> Wpisz nazwę produktu</p>
+        <div className="input-group mb-3">
+          {/*<button type='button' onClick={performSearch}>
             🔍
           </button>
           <input
-            type="number"
+            type="string"
             className="form-control"
-            placeholder="10-cyfrowy NIP organizacji"
+            placeholder="Nazwa produktu"
             value={nip}
             onChange={(e) => setNip(e.target.value)}
             id='nipUserInput'
           />
-        </div>
-        {!isNipValid && <p className="text-danger">Błąd: Nieprawidłowy NIP.</p>}
-        {organizationExists && <p className="text-danger">Organizacja o podanym numerze NIP już istnieje!</p>}
-        {orgCreated && <p className="text-success">Organizacja została utworzona.</p>}
-        {orgCreationError && <p className="text-danger">Błąd podczas tworzenia organizacji.</p>}
+        </div>*/}
+        {!isNipValid && <p className="text-danger">Nie znaleziono produktu</p>}
         <hr className='custom-hr' />
-        <div className='row m-2'>
-          <p>Nazwa organizacji:</p>
-          <input type='text' value={orgNameField} onChange={(e) => setOrgNameField(e.target.value)} className='form-control user-input' />
-          <p>Adres:</p>
-          <input type='text' value={adressField} onChange={(e) => setAdressField(e.target.value)} className='form-control user-input' />
-          <p>NIP:</p>
-          <input type='number' id='submitedNip' readOnly value={disabledNip} disabled className='form-control user-input' />
-        </div>
-        <div className="row p-2">
+        <div className="row p-2 ml-3">
+    </div>
+        {/*<div className="row p-2">
           <div className="d-flex justify-content-end">
-            <button type='button' className='btn btn-light m-2' onClick={clearFields}>Wyczyść pola</button>
-            <button type='button' className='btn btn-primary m-2' onClick={createOrganization} disabled={isCreating} >Utwórz organizację</button>
+            <button type='button' className='btn btn-light m-2' onClick={clearFields}>Odznacz produkty</button>
+            <button type='button' className='btn btn-primary m-2' onClick={createOrganization} disabled={isCreating} >Dodaj wybrane produkty</button>
           </div>
-        </div>
+      </div>*/}
       </div>
       <div className="fixed-bottom">
         <Footer />
@@ -212,4 +220,4 @@ const OrganizationFields = (props) => {
   );
 };
 
-export default OrganizationFields;
+export default DealFields;

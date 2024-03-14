@@ -26,7 +26,39 @@ a {
 }
 
 .bg-mildgreen {
-  background: #d9f2dd;
+  background-color: #d9f2dd;
+}
+
+.bg-blue {
+  background-color: #007bff; /* A commonly used blue shade */
+}
+
+.bg-red {
+  background-color: #ff4d4f; /* A bright red */
+}
+
+.bg-orange {
+  background-color: #ffa940; /* A vibrant orange */
+}
+
+.bg-yellow {
+  background-color: #ffec3d; /* A sunny yellow */
+}
+
+.bg-purple {
+  background-color: #9254de; /* A deep purple */
+}
+
+.bg-teal {
+  background-color: #00adb5; /* A soothing teal */
+}
+
+.bg-pink {
+  background-color: #ff85c0; /* A soft pink */
+}
+
+.bg-gray {
+  background-color: #8c8c8c; /* A neutral gray */
 }
 
 nav .navbar-brand {
@@ -60,6 +92,11 @@ nav .navbar-brand {
 .fixed-bottom {
   position: absolute !important;
 }
+
+.align-right {
+  float: right; /* This will align the element to the right */
+}
+
 
 .session-details {
   color: white

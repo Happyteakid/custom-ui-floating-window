@@ -1,27 +1,49 @@
 import { ProductsApi } from 'pipedrive';
 import logger from '../../shared/logger';
 import { getAPIClient } from '../../shared/oauth';
+
 const log = logger('Get Products API 📚');
+
 /**
- * Gets a list of products in Pipedrive for the ProductList page
+ * Gets a list of all products in Pipedrive for the ProductList page
  */
 const handler = async (req, res) => {
   try {
     log.info('Getting session details');
     const client = getAPIClient(req, res);
-    log.info('Initializing product');
     const api = new ProductsApi(client);
 
-    log.info('Getting all products');
-    const productObj = await api.getProducts();
-    const products = productObj.data;
+    let allProducts = [];
+    let moreItems = true;
+    let start = 0;
+    const limit = 100; // Pipedrive's default limit per call
 
-    log.info('Returning response');
-    res.status(200).json(products);
+    log.info('Getting all products');
+    while (moreItems) {
+      const response = await api.getProducts({
+        limit: limit,
+        start: start,
+      });
+
+      if (response.data && response.data.length > 0) {
+        allProducts = allProducts.concat(response.data);
+        start += response.data.length;
+
+        // Check if the fetched products are less than the limit, indicating the last page
+        if (response.data.length < limit) {
+          moreItems = false;
+        }
+      } else {
+        moreItems = false; // Exit the loop if no data
+      }
+    }
+
+    log.info('Returning response with all products');
+    res.status(200).json(allProducts);
   } catch (error) {
     log.info('Failed getting products');
     log.error(error);
-    res.status(500).json({ success: false, data: error });
+    res.status(500).json({ success: false, data: error.message });
   }
 };
 

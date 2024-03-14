@@ -1,10 +1,8 @@
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { startOutgoingCall } from '../shared/socket';
 import Footer from './Footer';
 import { isValidNip } from '../shared/functions';
-import { Html } from 'next/document';
-import { HttpStatusCode } from 'axios';
 
 // Shows the contacts in Pipedrive with an ability to filter
 const DealFields = (props) => {
@@ -32,7 +30,7 @@ const DealFields = (props) => {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data)
+        /*console.log(data)*/
         if (search) data = data.filter((i) => i.title.includes(search));
         setDeals(data);
       });
@@ -40,6 +38,10 @@ const DealFields = (props) => {
 
   const performSearch = (e) => {
     setSearch(e.target.value);
+  };
+
+  const handleDealClick = (id) => {
+    router.push(`/deal/${id}`);
   };
 
 /* */
@@ -175,15 +177,10 @@ const handleCheckboxChange = (product) => {
         <ol className="contact-list list-group">
           {/* List the deals based on the API response */}
           {deals.map((d) => (
-            <li
-              key={d.id}
-              className="list-group-item d-flex justify-content-between align-items-start"
-            >
-              <div>
-                <div className="ms-2 me-auto">
-                  <div className="fw-bold">{d.id}| {d.title} - wartość: {d.formatted_value}</div>
-                  {d.orgName}
-                </div>
+            <li key={d.id} className="list-group-item d-flex justify-content-between align-items-start" onClick={() => handleDealClick(d.id)} style={{ cursor: 'pointer' }}>
+              <div className="ms-2 me-auto">
+                <div className="fw-bold">{d.id}| {d.title} - wartość: {d.formatted_value}</div>
+                {d.orgName}
               </div>
             </li>
           ))}

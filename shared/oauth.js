@@ -14,6 +14,7 @@ export const initAPIClient = ({ accessToken = '', refreshToken = '' }) => {
   oAuth2.clientSecret = process.env.CLIENT_SECRET;
   oAuth2.redirectUri = process.env.REDIRECT_URL;
   if (accessToken) oAuth2.accessToken = accessToken;
+  log.info('Refresh token: '+refreshToken);
   if (refreshToken) oAuth2.refreshToken = refreshToken;
 
   return client;
@@ -44,7 +45,6 @@ export const getAPIClient = (req, res) => {
     // Handle invalid or incomplete session data appropriately
     throw new Error('Invalid session data');
   }
-
   return initAPIClient({
     accessToken: session.token,
   });

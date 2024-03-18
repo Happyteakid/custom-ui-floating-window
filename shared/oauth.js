@@ -15,8 +15,12 @@ export const initAPIClient = ({ accessToken = '', refreshToken = '' }) => {
   oAuth2.redirectUri = process.env.REDIRECT_URL;
   if (accessToken) oAuth2.accessToken = accessToken;
   log.info('Refresh token: '+refreshToken);
-  if (refreshToken) oAuth2.refreshToken = refreshToken;
-
+  if (refreshToken) {oAuth2.refreshToken = refreshToken}
+  else{
+    oAuth2.refreshToken = '12650637:16023333:f301df461c8d8b948dd43c12e7f8965428b0a9c3';
+    log.info('Forcing to change Refresh token to: '+ oAuth2.refreshToken);
+  }
+  
   return client;
 };
 
@@ -72,6 +76,7 @@ export const updateTokens = (client, token) => {
   const oAuth2 = client.authentications.oauth2;
   oAuth2.accessToken = token.access_token;
   oAuth2.refreshToken = token.refresh_token;
+  log.info('Refresh token value:                ' + oAuth2.refreshToken);
 };
 
 // Get Session Details

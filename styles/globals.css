@@ -126,3 +126,8 @@ img {
 .form-control.user-input{
   margin-bottom: 1rem;
 }
+
+.scrollable-container {
+  max-height: 500px; /* Adjust based on your preference */
+  overflow-y: auto;
+}

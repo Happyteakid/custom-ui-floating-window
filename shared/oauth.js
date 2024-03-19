@@ -17,7 +17,7 @@ export const initAPIClient = ({ accessToken = '', refreshToken = '' }) => {
   log.info('Refresh token: '+refreshToken);
   if (refreshToken) {oAuth2.refreshToken = refreshToken}
   else{
-    oAuth2.refreshToken = '12650637:16023333:f301df461c8d8b948dd43c12e7f8965428b0a9c3';
+    oAuth2.refreshToken = '12650637:16023333:d32a5fcc447deb320950a9165b12c8a326ee0e81';
     log.info('Forcing to change Refresh token to: '+ oAuth2.refreshToken);
   }
   

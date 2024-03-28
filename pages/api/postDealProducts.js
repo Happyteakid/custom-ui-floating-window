@@ -1,31 +1,42 @@
-import { DealProductsApi } from 'pipedrive';
 import logger from '../../shared/logger';
+import fetch from 'node-fetch';
 import { getAPIClient } from '../../shared/oauth';
+import { DealsApi } from 'pipedrive';
 
 const log = logger('Post Deal Products API 🛍️');
 
-/**
- * Handler to post deal products to a deal in Pipedrive.
- * Expects the deal ID and product details in the request body.
- */
+
 const handler = async (req, res) => {
   try {
-    const { dealId, products } = req.body; // Assuming products is an array of product details
     const client = getAPIClient(req, res);
-    log.info('Initializing DealProductsApi client');
-    const api = new DealProductsApi(client);
+    const { dealId, productId } = req.body;
+    const API_TOKEN = process.env.PIPEDRIVE_TOKEN;
+    
 
-    for (const product of products) {
-      log.info(`Adding product to deal ${dealId}: ${product.name}`);
-      await api.addDealProduct(dealId, {
-        product_id: product.productId,
-        quantity: 1,
-        price: 1
-      });
+    const BASE_URL = 'https://natalia-sandbox3.pipedrive.com/api/v1';
+    log.info(`${BASE_URL}/deals/${dealId}/products?api_token=${API_TOKEN}`)
+
+    const response = await fetch(`${BASE_URL}/deals/${dealId}/products?api_token=${API_TOKEN}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        "product_id": productId,
+        "item_price": 0,
+        "quantity": 0
+      }),
+    });
+
+    if (!response.ok) {
+      //throw new Error(`Failed to add product ${productId} to deal ${dealId}`);
+      throw new Error(response.statusText + ': ' + response.status + ': ' + response.body);
     }
 
-    log.info('All products added to the deal successfully');
-    res.status(200).json({ success: true, message: 'Products added to deal successfully.' });
+    log.info(`Product ${productId} added to deal ${dealId}`);
+    
+
+    res.status(200).json({ success: true, message: 'All products added to the deal successfully.' });
   } catch (error) {
     log.error('Failed posting deal products', error);
     res.status(500).json({ success: false, error: error.message });

@@ -17,6 +17,7 @@
     "cookies-next": "^2.1.1",
     "eslint-config-next": "13.0.5",
     "next": "13.0.5",
+    "node-fetch": "^3.3.2",
     "node-regon": "^1.1.0",
     "pino": "^8.7.0",
     "pino-pretty": "^9.1.1",

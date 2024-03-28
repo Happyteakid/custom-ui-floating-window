@@ -32,6 +32,7 @@ const DealFields = (props) => {
       .then((data) => {
         /*console.log(data)*/
         if (search) data = data.filter((i) => i.title.includes(search));
+        console.log(data)
         setDeals(data);
       });
   }, [router, search]);
@@ -177,9 +178,9 @@ const handleCheckboxChange = (product) => {
         <ol className="contact-list list-group">
           {/* List the deals based on the API response */}
           {deals.map((d) => (
-            <li key={d.id} className="list-group-item d-flex justify-content-between align-items-start" onClick={() => handleDealClick(d.id)} style={{ cursor: 'pointer' }}>
+            <li key={d.ID} className="list-group-item d-flex justify-content-between align-items-start" onClick={() => handleDealClick(d.ID)} style={{ cursor: 'pointer' }}>
               <div className="ms-2 me-auto">
-                <div className="fw-bold">{d.id}| {d.title} - wartość: {d.formatted_value}</div>
+                <div className="fw-bold">{d.ID}| {d.Tytuł} - wartość: {d.formatted_value}</div>
                 {d.orgName}
               </div>
             </li>

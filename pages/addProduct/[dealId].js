@@ -37,89 +37,48 @@ const [size, setSize] = useState(sizeOptions[0].value);
 const [isCreating, setIsCreating] = useState(false);
 
 async function addProductsToDeal() {
-    
-  if(isCreating) return; // Prevent function execution if already creating
-  setIsCreating(true); // Disable the button
-  setLoading(true);
+  if (isCreating || !selectedProducts.length) return;
 
-  fetch('/api/postDealProducts', {
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    method: 'POST',
-    type: 'application/json',
-    body: preparedJsonBody
-  }).then((res) => {
-    console.log("Response post:");
-    console.log(res);
-    res.json();
-    if(res.status == 200) {
-      console.log('Products deal added successfully');
-    } else { 
-      console.log('Products deal not added - error');
+  setIsCreating(true);
+
+  try {
+    const responses = await Promise.all(selectedProducts.map(async (item) => {
+      const requestBody = {
+        dealId: dealId,
+        productId: item.ID,
+      };
+
+      const preparedJsonBody = JSON.stringify(requestBody);
+      console.log(requestBody);
+
+      return fetch('/api/postDealProducts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: preparedJsonBody,
+      });
+    }));
+
+    const data = await Promise.all(responses.map(res => res.json()));
+
+    // Log each response
+    data.forEach((responseData, index) => {
+      if (responses[index].ok) {
+        console.log(`Product ${selectedProducts[index].ID} added successfully`, responseData);
+      } else {
+        console.error(`Product ${selectedProducts[index].ID} not added`, responseData);
       }
-  })
-  .catch((error) => {console.log(error)})
-  .finally(() =>{
+    });
+
+  } catch (error) {
+    console.error('Error posting deal products:', error);
+  } finally {
     setIsCreating(false);
-  });
-
-  setIsCreating(false);
+    setLoading(false);
   }
-
-
-
-const products = [
-  {
-    "ID": 15,
-    "Imię i nazwisko / Nazwa": "Centrum obróbcze ACE 540V Siemens 828D",
-    "Kod produktu": "ACE540V001",
-    "Opis": null,
-    "Jednostka": null,
-    "Podatek": 0,
-    "Kategoria": null,
-    "active_flag": true,
-    "Aktywne": "Tak",
-    "first_char": "c",
-    "Widoczne dla": "3",
-    "Właściciel": {
-        "id": 16023333,
-        "name": "Paweł Stawecki",
-        "email": "pawel.stawecki@luceosintelligence.com",
-        "has_pic": 0,
-        "pic_hash": null,
-        "active_flag": true,
-        "value": 16023333
-    },
-    "files_count": null,
-    "add_time": "2023-11-27 14:29:40",
-    "update_time": "2024-03-19 10:07:32",
-    "Cennik sprzedaży": 78500,
-    "Waluta – Cennik sprzedaży": "EUR",
-    "Grupa": "ACE",
-    "Model": "ACE",
-    "Numer katalogowy": null,
-    "Grupa materiałowa": "Obrabiarki",
-    "Typ": "Centrum tokarskie",
-    "Firma": "NTM",
-    "Znak": "1",
-    "Producent": "ACE",
-    "Sterowanie": "Siemens",
-    "Hierarchia": "Alpha",
-    "prices": [
-        {
-            "id": 16,
-            "product_id": 15,
-            "price": 78500,
-            "currency": "EUR",
-            "cost": 52150,
-            "overhead_cost": 0
-        }
-    ],
-    "product_variations": []
 }
-]
+
   useEffect(() => {
     const fetchProductsAndFields = async () => {
       const dealProductsResponse = await fetch(`/api/getDealProducts?dealId=${dealId}`);

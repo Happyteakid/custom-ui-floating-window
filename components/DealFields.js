@@ -3,39 +3,89 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Footer from './Footer';
 import { isValidNip } from '../shared/functions';
+import { Button } from 'primereact/button';
+import { SelectButton } from 'primereact/selectbutton';
+import 'primeflex/primeflex.css';
+import 'primereact/resources/themes/lara-light-indigo/theme.css';
+import 'primereact/resources/primereact.css';
+import 'primeicons/primeicons.css';
 
-// Shows the contacts in Pipedrive with an ability to filter
 const DealFields = (props) => {
-  const [nip, setNip] = useState('');  // State to manage the NIP input value
-  const [isNipValid, setIsNipValid] = useState(true);
-  const [organizationExists, setOrganizationExists] = useState(false);
-  const [disabledNip, setDisabledNip] = useState('');
-  const [adressField, setAdressField] = useState('');
-  const [orgNameField, setOrgNameField] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const [orgCreated, setOrgCreated] = useState(false);
-  const [orgCreationError, setOrgCreationError] = useState(false);
-
-  /*PART ADDED NEW 11.03.2024*/
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const [originalDeals, setOriginalDeals] = useState([]);
   const [deals, setDeals] = useState([]);
+  const [value, setValue] = useState('Wyłącz');
+  const [options, setOptions] = useState(['Włącz', 'Wyłącz']);
+  const [dealsFields, setDealsFields] = useState([]);
+  const [shouldFetchProducts, setShouldFetchProducts] = useState(false);
 
   useEffect(() => {
-    fetch('/api/getDeals', {
+    const fetchDeals = async () => {
+    try{
+      await fetch('/api/getDeals', {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
     })
-      .then((res) => res.json())
-      .then((data) => {
-        /*console.log(data)*/
-        if (search) data = data.filter((i) => i.title.includes(search));
-        console.log(data)
-        setDeals(data);
-      });
-  }, [router, search]);
+    .then((res) => res.json())
+    .then((data) => {
+      setOriginalDeals(data);
+      setDeals(data);
+    });
+    
+    // Fetch deals fields
+    const dealFieldResponse = await fetch(`/api/getDealFields`);
+    const dealsFieldData = await dealFieldResponse.json();
+    console.log(dealsFieldData);
+
+    setDealsFields(dealsFieldData);}
+    catch (error) {
+      console.error("Failed to fetch deal details or products:", error);
+    }};
+    fetchDeals();
+  }, []);
+  useEffect(() => {
+    let filteredDeals = [...originalDeals];
+    if (search) {
+      filteredDeals = filteredDeals.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
+    }
+  
+    if (value === 'Włącz') {
+      filteredDeals = filteredDeals.filter(d => d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] != null);
+      setShouldFetchProducts(true); // Indicate that products need fetching after updating deals
+    } else {
+      setShouldFetchProducts(false); // No need to fetch products
+    }
+  
+    setDeals(filteredDeals);
+  }, [search, value, originalDeals]);
+  
+
+  async function fetchProducts(id) {
+    const response = await fetch(`/api/getDealProducts?dealId=${id}`);
+    const productsData = await response.json();
+    console.log(productsData);
+    return productsData;
+  }
+  
+  useEffect(() => {
+    const fetchAndSetProductsForDeals = async () => {
+      if (!shouldFetchProducts || value !== 'Włącz' || !deals.length) return;
+  
+      const dealsWithProducts = await Promise.all(deals.map(async (deal) => {
+        const products = await fetchProducts(deal.id);
+        return { ...deal, products };
+      }));
+      console.log('Deals with products',dealsWithProducts);
+      setDeals(dealsWithProducts);
+      setShouldFetchProducts(false); // Reset the flag
+    };
+  
+    fetchAndSetProductsForDeals();
+  }, [deals, value, shouldFetchProducts]); // Depend on the flag
+  
 
   const performSearch = (e) => {
     setSearch(e.target.value);
@@ -45,114 +95,6 @@ const DealFields = (props) => {
     router.push(`/deal/${id}`);
   };
 
-/* */
-  async function getOrganization(nip) {
-    return new Promise((resolve, reject) => {
-      fetch('/api/getOrganization', {
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if(data != undefined) {
-          data = data.filter((org) => org["7b4ee6ab150271090998e28fcdf397f97b842435"] == nip);
-          setVisibility(data);
-          resolve(data.length > 0); // resolve with true if organization exists
-          } else { 
-            console.log("Data is undefined");
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          reject(error);
-        });
-    });
-  }
-
-  function setVisibility(data) {
-    console.log(data);
-    //Checks if any object with the given NIP exists in Pipedrive; If so, set the error message visibility to true
-    if (data.length > 0) {
-      setOrganizationExists(true);
-    } else {
-      setOrganizationExists(false);
-      setDisabledNip(nip);
-      getApiRegonOrg();
-    }
-  }
-
-  async function createOrganization() {
-    
-    if(isCreating) return; // Prevent function execution if already creating
-    setIsCreating(true); // Disable the button
-    if (isValidNip(nip)) {
-      console.log('createOrganization: NIP is correct');
-      const orgExists = await getOrganization(nip);
-      console.log("org exists1:" + organizationExists);
-      if (!orgExists) {
-        let preparedJsonBody = JSON.stringify({
-          "name": orgNameField,
-          "address": adressField,
-          "7b4ee6ab150271090998e28fcdf397f97b842435": nip
-        })
-
-        console.log(preparedJsonBody);
-
-        fetch('/api/postOrganization', {
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          method: 'POST',
-          type: 'application/json',
-          body: preparedJsonBody
-        }).then((res) => {
-          console.log("Response post:");
-          console.log(res);
-          res.json();
-          if(res.status == 200) {
-            console.log('Organization created successfully');
-            setOrgCreated(true);
-            setOrgCreationError(false);
-          } else { 
-            setOrgCreated(false);
-            setOrgCreationError(true);
-           }
-        })
-        .catch((error) => {console.log(error)})
-        .finally(() =>{
-          setIsCreating(false);
-        });
-      } else {
-        console.log('Organization already exists');
-        setIsCreating(false);
-      }
-    } else {
-      console.log("createOrganization: NIP is not correct");
-      setIsCreating(false);
-    }
-
-  };
-
-
-  function clearFields() {
-    console.log('clearFields');
-  }
-
-  // Assume we have a state to manage selected products
-const [selectedProducts, setSelectedProducts] = useState([]);
-
-
-// Handle checkbox change
-const handleCheckboxChange = (product) => {
-  if (selectedProducts.includes(product.id)) {
-    setSelectedProducts(selectedProducts.filter(id => id !== product.id));
-  } else {
-    setSelectedProducts([...selectedProducts, product.id]);
-  }
-};
 
   return (
     <div className="container-fluid">
@@ -162,11 +104,14 @@ const handleCheckboxChange = (product) => {
             <span className="navbar-brand"> 🟢 Witaj, {props.user.name} </span>
           </div>
         </nav>
-        <p> Wpisz tytuł szansy sprzedaży</p>
+        <div className="flex">
+          <div className='centered-flex fw-bold'> Tryb akceptacji ofert:</div>
+        <SelectButton className='m-3' value={value} onChange={(e) => setValue(e.value)} options={options} />
+        </div>
         <div className="input-group mb-3">
-          {/*<button type='button' onClick={performSearch}>
-            🔍
-  </button>*/}
+          <div className='fw-bold centered-flex m-2'>
+          Filtruj:
+          </div>
           <input
             type="string"
             className="form-control"
@@ -176,40 +121,27 @@ const handleCheckboxChange = (product) => {
           />
         </div>
         <ol className="contact-list list-group">
-          {/* List the deals based on the API response */}
-          {deals.map((d) => (
-            <li key={d.ID} className="list-group-item d-flex justify-content-between align-items-start" onClick={() => handleDealClick(d.ID)} style={{ cursor: 'pointer' }}>
-              <div className="ms-2 me-auto">
-                <div className="fw-bold">{d.ID}| {d.Tytuł} - wartość: {d.formatted_value}</div>
-                {d.orgName}
-              </div>
-            </li>
-          ))}
+        {deals.map((d) => (
+          <li key={d.id} className="list-group-item d-flex justify-content-between align-items-start" onClick={() => handleDealClick(d.id)} style={{ cursor: 'pointer' }}>
+            <div className="ms-2 me-auto">
+              <div className="fw-bold">{d.id}| {d.title} - wartość: {d.formatted_value}</div>
+              <div>{d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] === '200' ? <span><strong>Status:</strong> Złożono wniosek</span> : null}</div>
+              {d.products && Object.values(d.products).map((product, index) => (
+                <div key={index}><strong>Nazwa produktu:</strong> {product.name}</div>
+              ))}
+              {value === 'Włącz' && d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] === '200' && (
+                <div className="flex m-2">
+                  <Button className='m-2 p-button-success' label='Akceptuj możliwość stworzenia oferty' />
+                  <Button className='m-2 p-button-danger' label='Odrzuć możliwość stworzenia oferty' />
+                </div>
+              )}
+            </div>
+          </li>
+        ))}
         </ol>
-        {/*<p> Wpisz nazwę produktu</p>
-        <div className="input-group mb-3">
-          {/*<button type='button' onClick={performSearch}>
-            🔍
-          </button>
-          <input
-            type="string"
-            className="form-control"
-            placeholder="Nazwa produktu"
-            value={nip}
-            onChange={(e) => setNip(e.target.value)}
-            id='nipUserInput'
-          />
-        </div>*/}
-        {!isNipValid && <p className="text-danger">Nie znaleziono produktu</p>}
         <hr className='custom-hr' />
         <div className="row p-2 ml-3">
     </div>
-        {/*<div className="row p-2">
-          <div className="d-flex justify-content-end">
-            <button type='button' className='btn btn-light m-2' onClick={clearFields}>Odznacz produkty</button>
-            <button type='button' className='btn btn-primary m-2' onClick={createOrganization} disabled={isCreating} >Dodaj wybrane produkty</button>
-          </div>
-      </div>*/}
       </div>
       <div className="fixed-bottom">
         <Footer />

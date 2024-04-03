@@ -94,7 +94,7 @@ nav .navbar-brand {
 }
 
 .align-right {
-  float: right; /* This will align the element to the right */
+  float: right;
 }
 
 
@@ -130,4 +130,15 @@ img {
 .scrollable-container {
   max-height: 500px; /* Adjust based on your preference */
   overflow-y: auto;
+}
+
+.centered-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.p-selectbutton.p-buttonset {
+  display: flex;
+  flex-direction: row; 
 }

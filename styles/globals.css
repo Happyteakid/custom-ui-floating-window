@@ -70,14 +70,14 @@ nav .navbar-brand {
 }
 
 .contact-list {
-  height: 375px;
+  height: 635px;
   overflow-y: scroll;
 }
+
 
 .contact-list li {
   color: inherit;
   text-decoration: none;
-  cursor: pointer;
 }
 
 .contact-list li * {

@@ -1,14 +1,14 @@
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Footer from './Footer';
-import { isValidNip } from '../shared/functions';
 import { Button } from 'primereact/button';
 import { SelectButton } from 'primereact/selectbutton';
 import 'primeflex/primeflex.css';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
 
 const DealFields = (props) => {
   const router = useRouter();
@@ -92,7 +92,52 @@ const DealFields = (props) => {
   };
 
   const handleDealClick = (id) => {
+    console.log('Navigating to deal with id:', id);
     router.push(`/deal/${id}`);
+  };
+  const handleAcceptOfferClick = (event, dealId) => {
+    event.stopPropagation(); 
+    console.log('Accepting offer for dealId:', dealId);
+  };
+
+  const handleRejectOfferClick = (event, dealId) => {
+    event.stopPropagation(); 
+    console.log('Rejecting offer for dealId:', dealId);
+  };
+
+  const DealList = ({ dealList }) => {
+    return (
+      <ol className="contact-list list-group">
+        {dealList.map((d) => (
+          <div
+            key={d.id}
+            className="list-group-item d-flex justify-content-between align-items-start"
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="ms-2 me-auto">
+              <div className="fw-bold text-lg" onClick={() => handleDealClick(d.id)}>{d.id}| {d.title} - wartość: {d.formatted_value}</div>
+              {value === 'Włącz' && <div className='fw-bold'>ID etapu w lejku: {d.stage_id}</div>}
+              <div>{d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] === '200' ? <span><strong>Status:</strong> Złożono wniosek</span> : null}</div>
+              {value === 'Włącz' && d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] === '200' && (
+                <div className='m-2'>
+                  <DataTable value={Object.values(d.products || {})}>
+                      <Column field="product_id" header="Product ID"></Column>
+                      <Column field="name" header="Nazwa produktu"></Column>
+                      <Column field="sum_formatted" header="Cena"></Column>
+                      <Column field="quantity" header="Ilość"></Column>
+                      <Column field="comments" header="Komentarz"></Column>
+                    </DataTable>
+                    <div className="flex m-2">
+                      <Button className='m-2 p-button-success' label='Akceptuj możliwość stworzenia oferty' onClick={(e) => handleAcceptOfferClick(e, d.id)} />
+                      <Button className='m-2 p-button-danger' label='Odrzuć możliwość stworzenia oferty' onClick={(e) => handleRejectOfferClick(e, d.id)} />
+                      </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </ol>
+    );
   };
 
 
@@ -105,7 +150,7 @@ const DealFields = (props) => {
           </div>
         </nav>
         <div className="flex">
-          <div className='centered-flex fw-bold'> Tryb akceptacji ofert:</div>
+          <div className='centered-flex fw-bold text-xl'> Tryb akceptacji ofert:</div>
         <SelectButton className='m-3' value={value} onChange={(e) => setValue(e.value)} options={options} />
         </div>
         <div className="input-group mb-3">
@@ -120,25 +165,7 @@ const DealFields = (props) => {
             id='dealUserInput'
           />
         </div>
-        <ol className="contact-list list-group">
-        {deals.map((d) => (
-          <li key={d.id} className="list-group-item d-flex justify-content-between align-items-start" onClick={() => handleDealClick(d.id)} style={{ cursor: 'pointer' }}>
-            <div className="ms-2 me-auto">
-              <div className="fw-bold">{d.id}| {d.title} - wartość: {d.formatted_value}</div>
-              <div>{d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] === '200' ? <span><strong>Status:</strong> Złożono wniosek</span> : null}</div>
-              {d.products && Object.values(d.products).map((product, index) => (
-                <div key={index}><strong>Nazwa produktu:</strong> {product.name}</div>
-              ))}
-              {value === 'Włącz' && d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] === '200' && (
-                <div className="flex m-2">
-                  <Button className='m-2 p-button-success' label='Akceptuj możliwość stworzenia oferty' />
-                  <Button className='m-2 p-button-danger' label='Odrzuć możliwość stworzenia oferty' />
-                </div>
-              )}
-            </div>
-          </li>
-        ))}
-        </ol>
+        <DealList dealList={deals} />
         <hr className='custom-hr' />
         <div className="row p-2 ml-3">
     </div>

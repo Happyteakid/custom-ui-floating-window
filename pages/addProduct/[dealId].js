@@ -13,6 +13,7 @@ import DealProductsList from '../../components/DealProductsList';
 import GoBackButton from '../../components/GoBackButton';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
+import { Checkbox } from 'primereact/checkbox'
 
 
 const AddProduct = () => {
@@ -22,6 +23,7 @@ const AddProduct = () => {
   const [otherProducts, setOtherProducts] = useState([]);
   const [productFields, setProductFields] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [hierarchy, setHierarchy] = useState('196');
   const [filters, setFilters] = useState({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     name: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
@@ -33,6 +35,11 @@ const AddProduct = () => {
     { label: 'Średnie', value: 'normal' },
     { label: 'Duże', value: 'large' }
 ]);
+const [companyOptions] = useState([
+  { label: 'HTM', value: 'htm' },
+  { label: 'NTM', value: 'ntm' }
+]);
+const [company, setCompany] = useState(companyOptions[0].value);
 const [size, setSize] = useState(sizeOptions[0].value);
 const [isCreating, setIsCreating] = useState(false);
 
@@ -46,6 +53,7 @@ async function addProductsToDeal() {
       const requestBody = {
         dealId: dealId,
         productId: item.ID,
+        productPrice: item["Cennik sprzedaży"]
       };
 
       const preparedJsonBody = JSON.stringify(requestBody);
@@ -98,9 +106,11 @@ async function addProductsToDeal() {
       // Update otherProducts with correct values for enums
       const updatedOtherProductsData = updateProductsWithFieldValues(otherProductsData, productFieldsData);
       //console.log(productFieldsData);
-      console.log(updatedOtherProductsData);
+      //console.log('Tutaj: otherProductsData',otherProductsData);
+
+
       setOtherProducts(updatedOtherProductsData);
-      //setOtherProducts(otherProductsData);
+      
     };
 
     if (dealId) {
@@ -197,8 +207,9 @@ async function addProductsToDeal() {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-            <h3>Dodaj produkty do szansy sprzedaży - ID {dealId}</h3>
+            <h3>Szansy sprzedaży - ID {dealId}</h3>
             <DealProductsList dealProducts={dealProducts} />
+            <div className="m-3 text-xl font-bold"> Dodaj produkty</div>
             <div className='flex'>
             <InputText className='m-3' placeholder='Szukaj'
             onInput={(e) => setFilters({
@@ -207,6 +218,17 @@ async function addProductsToDeal() {
             />
             <div className="flex justify-content-center m-3">
                 <SelectButton value={size} onChange={(e) => setSize(e.value)} options={sizeOptions} />
+            </div>
+            <div className="flex justify-content-center m-3">
+                <SelectButton value={company} onChange={(e) => setCompany(e.value)} options={companyOptions} />
+            </div>
+            <div className="flex align-items-center">
+            <Checkbox
+              inputId="filtrPodprodukt1"
+              onChange={e => setHierarchy(e.checked)}
+              checked={hierarchy}
+            />
+            <label htmlFor="filtrPodprodukt1" className="ml-2">Filtruj kompatybilne podprodukty</label>
             </div>
             <Button
               label="Dodaj produkty"
@@ -218,7 +240,6 @@ async function addProductsToDeal() {
             <DataTable value={otherProducts} paginator rows={6} size={size}
                 dataKey="ID" selectionMode="checkbox" selection={selectedProducts}
                 onSelectionChange={(e) => setSelectedProducts(e.value)}
-                
                 filters={filters} onFilter={onFilter} loading={loading}
                 emptyMessage="Nie znaleziono produktów"
                 footer={`W sumie jest ${otherProducts.length} produktów.`}>
@@ -230,7 +251,6 @@ async function addProductsToDeal() {
                         filterElement={field.field_type === 'enum' ? renderFilterElement(field) : null} />
                 ))}
             </DataTable>
-
             <GoBackButton />
         </div>
   );

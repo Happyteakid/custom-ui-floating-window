@@ -9,7 +9,7 @@ const log = logger('Post Deal Products API 🛍️');
 const handler = async (req, res) => {
   try {
     const client = getAPIClient(req, res);
-    const { dealId, productId } = req.body;
+    const { dealId, productId, productPrice } = req.body;
     const API_TOKEN = process.env.PIPEDRIVE_TOKEN;
     
 
@@ -23,8 +23,8 @@ const handler = async (req, res) => {
       },
       body: JSON.stringify({
         "product_id": productId,
-        "item_price": 0,
-        "quantity": 0
+        "item_price": productPrice,
+        "quantity": 1
       }),
     });
 

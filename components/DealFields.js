@@ -19,6 +19,7 @@ const DealFields = (props) => {
   const [options, setOptions] = useState(['Włącz', 'Wyłącz']);
   const [dealsFields, setDealsFields] = useState([]);
   const [shouldFetchProducts, setShouldFetchProducts] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const fetchDeals = async () => {
@@ -62,7 +63,12 @@ const DealFields = (props) => {
     setDeals(filteredDeals);
   }, [search, value, originalDeals]);
   
-
+  async function updateDeal(){
+    async function addProductsToDeal() {
+      if (isUpdating) return;
+      setIsUpdating(true);
+    }
+  }
   async function fetchProducts(id) {
     const response = await fetch(`/api/getDealProducts?dealId=${id}`);
     const productsData = await response.json();
@@ -80,11 +86,11 @@ const DealFields = (props) => {
       }));
       console.log('Deals with products',dealsWithProducts);
       setDeals(dealsWithProducts);
-      setShouldFetchProducts(false); // Reset the flag
+      setShouldFetchProducts(false);
     };
   
     fetchAndSetProductsForDeals();
-  }, [deals, value, shouldFetchProducts]); // Depend on the flag
+  }, [deals, value, shouldFetchProducts]);
   
 
   const performSearch = (e) => {
@@ -98,11 +104,13 @@ const DealFields = (props) => {
   const handleAcceptOfferClick = (event, dealId) => {
     event.stopPropagation(); 
     console.log('Accepting offer for dealId:', dealId);
+    updateDeal(true);
   };
 
   const handleRejectOfferClick = (event, dealId) => {
     event.stopPropagation(); 
     console.log('Rejecting offer for dealId:', dealId);
+    updateDeal(false);
   };
 
   const DealList = ({ dealList }) => {

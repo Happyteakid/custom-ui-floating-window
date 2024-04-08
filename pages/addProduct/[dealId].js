@@ -10,6 +10,7 @@ import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
 import { SelectButton } from 'primereact/selectbutton';
 import DealProductsList from '../../components/DealProductsList';
+import ProductsListWithFilter from '../../components/ProductsListWithFilter';
 import GoBackButton from '../../components/GoBackButton';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
@@ -24,11 +25,7 @@ const AddProduct = () => {
   const [productFields, setProductFields] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [hierarchy, setHierarchy] = useState('196');
-  const [filters, setFilters] = useState({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    name: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-    Id: { value: null, matchMode: FilterMatchMode.EQUALS }
-});
+  const [filterHierarchy, setFilterHierarchy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sizeOptions] = useState([
     { label: 'Małe', value: 'small' },
@@ -42,6 +39,10 @@ const [companyOptions] = useState([
 const [company, setCompany] = useState(companyOptions[0].value);
 const [size, setSize] = useState(sizeOptions[0].value);
 const [isCreating, setIsCreating] = useState(false);
+
+const handleHierarchyChange = (e) => {
+  setFilterHierarchy(e.checked);
+};
 
 async function addProductsToDeal() {
   if (isCreating || !selectedProducts.length) return;
@@ -102,11 +103,11 @@ async function addProductsToDeal() {
       const productFieldsResponse = await fetch('/api/getProductFields');
       const productFieldsData = await productFieldsResponse.json();
       setProductFields(productFieldsData);
-      console.log(productFieldsData);
+      console.log('productFieldsData: ',productFieldsData);
       // Update otherProducts with correct values for enums
       const updatedOtherProductsData = updateProductsWithFieldValues(otherProductsData, productFieldsData);
       //console.log(productFieldsData);
-      //console.log('Tutaj: otherProductsData',otherProductsData);
+      console.log('Tutaj: updatedOtherProductsData',updatedOtherProductsData);
 
 
       setOtherProducts(updatedOtherProductsData);
@@ -139,7 +140,7 @@ async function addProductsToDeal() {
   
   function updateProductsWithFieldValues(products, fields) {
     const fieldMappings = buildFieldMappings(fields);
-    
+    console.log('products: ',products);
     return products.map(product => {
       const updatedProduct = {};
   
@@ -159,63 +160,12 @@ async function addProductsToDeal() {
     });
   }
 
-
-  const findFieldOptions = (fieldName) => {
-    const field = productFields.find(f => f.name === fieldName);
-    return field && field.options ? field.options : [];
-  };
-
-  const renderFilterElement = (field) => {
-    if (field.field_type === 'enum') {
-      const options = findFieldOptions(field.name);
-      return (
-        <Dropdown
-          value={filters[field.name]?.value || ''}
-          options={options}
-          onChange={(e) => {
-            const newFilters = { ...filters, [field.name]: { value: e.value, matchMode: FilterMatchMode.EQUALS }};
-            setFilters(newFilters);
-          }}
-          optionLabel="label"
-          placeholder="Select"
-          className="p-column-filter"
-        />
-      );
-    }
-    else if (field.field_type === 'varchar' || field.field_type === 'text') {
-      return (
-        <InputText
-          value={filters[field.name]?.value || ''}
-          onChange={(e) => {
-            const newFilters = { ...filters, [field.name]: { value: e.target.value, matchMode: FilterMatchMode.CONTAINS }};
-            setFilters(newFilters);
-          }}
-          className="p-column-filter"
-          placeholder={`Search by ${field.name}`}
-        />
-      );
-    }
-    return null;
-  };
-
-  const onFilter = (e) => {
-    setFilters(e.filters);
-  };
-
-  
-  const excludedFields = ["Cena","Jednostka", "Podatek", "Kategoria", "Właściciel", "Ceny jednostkowe", "Aktywne", "Widoczne dla", "Opis"];
-
   return (
     <div className="max-w-4xl mx-auto p-4">
             <h3>Szansy sprzedaży - ID {dealId}</h3>
             <DealProductsList dealProducts={dealProducts} />
             <div className="m-3 text-xl font-bold"> Dodaj produkty</div>
             <div className='flex'>
-            <InputText className='m-3' placeholder='Szukaj'
-            onInput={(e) => setFilters({
-              global: { value: e.target.value, matchMode: FilterMatchMode.CONTAINS }
-            })}
-            />
             <div className="flex justify-content-center m-3">
                 <SelectButton value={size} onChange={(e) => setSize(e.value)} options={sizeOptions} />
             </div>
@@ -225,8 +175,8 @@ async function addProductsToDeal() {
             <div className="flex align-items-center">
             <Checkbox
               inputId="filtrPodprodukt1"
-              onChange={e => setHierarchy(e.checked)}
-              checked={hierarchy}
+              onChange={handleHierarchyChange}
+              checked={filterHierarchy}
             />
             <label htmlFor="filtrPodprodukt1" className="ml-2">Filtruj kompatybilne podprodukty</label>
             </div>
@@ -237,20 +187,12 @@ async function addProductsToDeal() {
               onClick={() => addProductsToDeal()}
             />
             </div>
-            <DataTable value={otherProducts} paginator rows={6} size={size}
-                dataKey="ID" selectionMode="checkbox" selection={selectedProducts}
-                onSelectionChange={(e) => setSelectedProducts(e.value)}
-                filters={filters} onFilter={onFilter} loading={loading}
-                emptyMessage="Nie znaleziono produktów"
-                footer={`W sumie jest ${otherProducts.length} produktów.`}>
-                <Column selectionMode="multiple" style={{ width: '3rem' }} />
-                {productFields.filter(field => !excludedFields.includes(field.name)).map((field,index) => (
-                    <Column key={`${field.key}-${index}`} field={field.name} header={field.name}
-                        body={(rowData) => rowData[field.name] ?? 'N/A'}
-                        sortable filter filterPlaceholder="Szukaj" filterMatchMode="contains"
-                        filterElement={field.field_type === 'enum' ? renderFilterElement(field) : null} />
-                ))}
-            </DataTable>
+            <ProductsListWithFilter
+              products={otherProducts}
+              selectedProducts={selectedProducts}
+              onSelectionChange={setSelectedProducts}
+              filterHierarchy={filterHierarchy}
+            />
             <GoBackButton />
         </div>
   );

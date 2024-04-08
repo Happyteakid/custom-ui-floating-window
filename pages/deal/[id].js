@@ -1,7 +1,9 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
+import { Tooltip } from 'primereact/tooltip';
 import { Column } from 'primereact/column';
+import { Button } from 'primereact/button';
 import Footer from '../../components/Footer';
 import GoBackButton from '../../components/GoBackButton';
 
@@ -54,7 +56,12 @@ const DealDetails = () => {
         <Column field="label" header="Pole" className="fw-bold"/>
         <Column field="value" header="Wartość" />
       </DataTable>
-
+      <div>
+        <Button className='p-button-success m-2 fw-bold' tooltip="Twoja oferta spełnia kryteria.">Możliwe wysyłanie ofert</Button>
+      </div>
+      <div>
+        <Button className='p-button-danger m-2 fw-bold' tooltip="Twoja oferta niespełnia kryteriów, wymagana dodatkowa akceptacja.">Niemożliwe wysyłanie ofert</Button>
+      </div>
       {dealProducts.length > 0 && (
         <>
           <h2 className="text-2xl font-semibold mt-4 mb-2">Produkty:</h2>

@@ -6,14 +6,48 @@ import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
 
-const DealProductsList = ({ dealProducts }) => {
+const DealProductsList = ({ dealProducts, dealId }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [isCreating, setIsCreating] = useState(false);
 
   if (dealProducts.length === 0) return null;
 
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     console.log('Selected products to delete:', selectedProducts);
-    // Perform the deletion logic here
+    if (isCreating || !selectedProducts.length) return;
+    setIsCreating(true);
+    
+    try {
+      const responses = await Promise.all(selectedProducts.map(async (item) => {
+        const requestBody = {
+          dealId: dealId,
+          product_attachment_id: item.id, // Assuming each item has an `id` field
+        };
+
+        return fetch('/api/deleteDealProduct', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+      }));
+
+      const data = await Promise.all(responses.map(res => res.json()));
+
+      // Log each response
+      data.forEach((responseData, index) => {
+        if (responses[index].ok) {
+          console.log(`Product ${selectedProducts[index].id} deleted successfully`, responseData);
+        } else {
+          console.error(`Failed to delete product ${selectedProducts[index].id}`, responseData);
+        }
+      });
+    } catch (error) {
+      console.error('Error deleting deal products:', error);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -30,9 +64,9 @@ const DealProductsList = ({ dealProducts }) => {
         scrollHeight="250px" style={{ maxWidth: '1200px' }}
       >
         <Column selectionMode="multiple" headerStyle={{ width: '3em' }}></Column>
-        <Column field="product_id" header="ID" style={{ maxWidth: '5px' }}></Column>
+        <Column field="id" header="ID" style={{ maxWidth: '5px' }}></Column>
         <Column field="name" header="Nazwa" style={{ maxWidth: '100px' }}></Column>
-        <Column field="sum_formatted" header="Cena" style={{ maxWidth: '20px' }}></Column>
+        <Column field="price" header="Cena" style={{ maxWidth: '20px' }}></Column>
         <Column field="comments" header="Komentarz" style={{ maxWidth: '100px' }}></Column>
       </DataTable>
       {selectedProducts.length > 0 && (

@@ -18,7 +18,11 @@ const log = logger("Core ✨");
 
 export const getServerSideProps = async ({ req, res, query }) => {
   log.info("Checking session details based on query parameters");
+  log.info("UserID:" + query.userId);
+  log.info("Req:" ,req);
+  log.info("Res:",res);
   const session = await initalizeSession(req, res, query.userId);
+  
   return session.auth
     ? { props: { auth: true, session } }
     : { props: { auth: false } };
@@ -53,7 +57,7 @@ const Home = ({ auth, session }) => {
     return <Login />;
   }
 
-  return <DealFields {...context} />;
+  return <DealFields {...context} className="scrollable-container2" />;
 
 };
 

@@ -8,14 +8,9 @@ import 'primeflex/primeflex.css';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
-import { SelectButton } from 'primereact/selectbutton';
 import DealProductsList from '../../components/DealProductsList';
-import ProductsListWithFilter from '../../components/ProductsListWithFilter';
 import GoBackButton from '../../components/GoBackButton';
 import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox'
-
 
 const AddProduct = () => {
   const router = useRouter();
@@ -24,69 +19,12 @@ const AddProduct = () => {
   const [otherProducts, setOtherProducts] = useState([]);
   const [productFields, setProductFields] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [hierarchy, setHierarchy] = useState('196');
-  const [filterHierarchy, setFilterHierarchy] = useState(false);
+  const [filters, setFilters] = useState({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    name: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
+    id: { value: null, matchMode: FilterMatchMode.EQUALS }
+});
   const [loading, setLoading] = useState(true);
-  const [sizeOptions] = useState([
-    { label: 'Małe', value: 'small' },
-    { label: 'Średnie', value: 'normal' },
-    { label: 'Duże', value: 'large' }
-]);
-const [companyOptions] = useState([
-  { label: 'HTM', value: 'htm' },
-  { label: 'NTM', value: 'ntm' }
-]);
-const [company, setCompany] = useState(companyOptions[0].value);
-const [size, setSize] = useState(sizeOptions[0].value);
-const [isCreating, setIsCreating] = useState(false);
-
-const handleHierarchyChange = (e) => {
-  setFilterHierarchy(e.checked);
-};
-
-async function addProductsToDeal() {
-  if (isCreating || !selectedProducts.length) return;
-
-  setIsCreating(true);
-
-  try {
-    const responses = await Promise.all(selectedProducts.map(async (item) => {
-      const requestBody = {
-        dealId: dealId,
-        productId: item.ID,
-        productPrice: item["Cennik sprzedaży"]
-      };
-
-      const preparedJsonBody = JSON.stringify(requestBody);
-      console.log(requestBody);
-
-      return fetch('/api/postDealProducts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: preparedJsonBody,
-      });
-    }));
-
-    const data = await Promise.all(responses.map(res => res.json()));
-
-    // Log each response
-    data.forEach((responseData, index) => {
-      if (responses[index].ok) {
-        console.log(`Product ${selectedProducts[index].ID} added successfully`, responseData);
-      } else {
-        console.error(`Product ${selectedProducts[index].ID} not added`, responseData);
-      }
-    });
-
-  } catch (error) {
-    console.error('Error posting deal products:', error);
-  } finally {
-    setIsCreating(false);
-    setLoading(false);
-  }
-}
 
   useEffect(() => {
     const fetchProductsAndFields = async () => {
@@ -103,15 +41,13 @@ async function addProductsToDeal() {
       const productFieldsResponse = await fetch('/api/getProductFields');
       const productFieldsData = await productFieldsResponse.json();
       setProductFields(productFieldsData);
-      console.log('productFieldsData: ',productFieldsData);
+
       // Update otherProducts with correct values for enums
       const updatedOtherProductsData = updateProductsWithFieldValues(otherProductsData, productFieldsData);
-      //console.log(productFieldsData);
-      console.log('Tutaj: updatedOtherProductsData',updatedOtherProductsData);
-
-
+      console.log(updatedOtherProductsData);
+      //console.log(otherProductsData);
       setOtherProducts(updatedOtherProductsData);
-      
+      //setOtherProducts(otherProductsData);
     };
 
     if (dealId) {
@@ -120,80 +56,102 @@ async function addProductsToDeal() {
     setLoading(false);
   }, [dealId]);
 
-  const buildFieldMappings = (fields) => {
-    const keyToNameMapping = {};
-    fields.forEach(field => {
-      if (field.field_type === 'enum' && field.options) {
-        keyToNameMapping[field.key] = {
-          name: field.name,
-          options: field.options.reduce((acc, option) => {
-            acc[option.id.toString()] = option.label;
-            return acc;
-          }, {})
-        };
-      } else {
-        keyToNameMapping[field.key] = { name: field.name };
-      }
-    });
-    return keyToNameMapping;
-  };
-  
   function updateProductsWithFieldValues(products, fields) {
-    const fieldMappings = buildFieldMappings(fields);
-    console.log('products: ',products);
     return products.map(product => {
-      const updatedProduct = {};
-  
-      Object.entries(product).forEach(([key, value]) => {
-        const fieldMapping = fieldMappings[key];
-        if (fieldMapping) {
-          if (fieldMapping.options && fieldMapping.options[value]) {
-            updatedProduct[fieldMapping.name] = fieldMapping.options[value.toString()];
-          } else {
-            updatedProduct[fieldMapping.name] = value;
+      const updatedProduct = { ...product };
+
+      fields.forEach(field => {
+        if (field.field_type === 'enum' && field.options && product[field.key]) {
+          const matchingOption = field.options.find(option => option.id.toString() === product[field.key].toString());
+          if (matchingOption) {
+            updatedProduct[field.key] = matchingOption.label;
           }
-        } else {
-          updatedProduct[key] = value;
         }
       });
+
       return updatedProduct;
     });
   }
 
+  
+
+  const renderProductField = (rowData, field) => {
+    const value = rowData[field.key];
+/*
+    if (typeof value === 'object' && value !== null) {
+      console.log(value);
+        return value.name || JSON.stringify(value);
+    }
+*/
+//    console.log(value);
+    return value ?? 'N/A';
+};
+
+  const findFieldOptions = (fieldName) => {
+    const field = productFields.find(f => f.name === fieldName);
+    return field && field.options ? field.options : [];
+  };
+
+  const renderFilterElement = (field) => {
+    if (field.field_type === 'enum') {
+        const options = findFieldOptions(field.name);
+        return (
+            <Dropdown
+                value={filters[field.key] ? filters[field.key].value : null}
+                options={options}
+                onChange={(e) => setFilters({ ...filters, [field.key]: { value: e.value, matchMode: 'equals' } })}
+                optionLabel="label"
+                placeholder="Select"
+                className="p-column-filter"
+            />
+        );
+    }
+    if (field.field_type == 'text') {
+      return (
+          <InputText
+              value={filters[field.key]?.value || ''}
+              onChange={(e) => setFilters({ ...filters, [field.key]: { value: e.target.value, matchMode: FilterMatchMode.CONTAINS } })}
+              className="p-column-filter"
+              placeholder={`Search by ${field.name}`}
+          />
+      );
+  }
+    return null;
+};
+
+  const onFilter = (e) => {
+    setFilters(e.filters);
+  };
+
+  
+  const excludedFields = ["Cena","Jednostka", "Podatek", "Kategoria", "Właściciel", "Ceny jednostkowe", "Aktywne", "Widoczne dla", "Opis"];
+
   return (
+    <div className='scrollable-container2'>
     <div className="max-w-4xl mx-auto p-4">
-            <h3>Szansy sprzedaży - ID {dealId}</h3>
+            <h3>Dodaj produkty do szansy sprzedaży - ID {dealId}</h3>
             <DealProductsList dealProducts={dealProducts} />
-            <div className="m-3 text-xl font-bold"> Dodaj produkty</div>
-            <div className='flex'>
-            <div className="flex justify-content-center m-3">
-                <SelectButton value={size} onChange={(e) => setSize(e.value)} options={sizeOptions} />
-            </div>
-            <div className="flex justify-content-center m-3">
-                <SelectButton value={company} onChange={(e) => setCompany(e.value)} options={companyOptions} />
-            </div>
-            <div className="flex align-items-center">
-            <Checkbox
-              inputId="filtrPodprodukt1"
-              onChange={handleHierarchyChange}
-              checked={filterHierarchy}
+            <InputText className='m-3' placeholder='Szukaj'
+            onInput={(e) => setFilters({
+              global: { value: e.target.value, matchMode: FilterMatchMode.CONTAINS }
+            })}
             />
-            <label htmlFor="filtrPodprodukt1" className="ml-2">Filtruj kompatybilne podprodukty</label>
-            </div>
-            <Button
-              label="Dodaj produkty"
-              icon="pi pi-plus"
-              className="p-button m-3"
-              onClick={() => addProductsToDeal()}
-            />
-            </div>
-            <ProductsListWithFilter
-              products={otherProducts}
-              selectedProducts={selectedProducts}
-              onSelectionChange={setSelectedProducts}
-              filterHierarchy={filterHierarchy}
-            />
+            <DataTable value={otherProducts} paginator rows={4}
+                dataKey="id" selectionMode="checkbox" selection={selectedProducts}
+                onSelectionChange={(e) => setSelectedProducts(e.value)}
+                filters={filters} onFilter={onFilter} loading={loading}
+                emptyMessage="Nie znaleziono produktów"
+                footer={`W sumie jest ${otherProducts.length} produktów.`}>
+                <Column selectionMode="multiple" style={{ width: '3rem' }} />
+                {productFields.filter(field => !excludedFields.includes(field.name)).map((field, index) => (
+                    <Column key={field.key} field={field.key} header={field.name} body={(rowData) => renderProductField(rowData, field)}
+                        sortable filter filterPlaceholder="Szukaj" filterMatchMode="contains"
+                        filterElement={field.field_type === 'enum' ? renderFilterElement(field) : null} />
+                        
+                ))}
+            </DataTable>
             <GoBackButton />
+        </div>
         </div>
   );
 };

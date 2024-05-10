@@ -150,7 +150,7 @@ const DealFields = (props) => {
 
 
   return (
-    <div className="container-fluid">
+    <div className="container-fluid scrollable-container2">
       <div className="row">
         <nav className="navbar navbar-light bg-mildgreen">
           <div className="container-fluid">

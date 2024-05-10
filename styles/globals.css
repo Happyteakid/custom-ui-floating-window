@@ -147,6 +147,11 @@ img {
   overflow-y: auto;
 }
 
+.scrollable-container2 {
+  max-height: 93vh; /* Adjust based on your preference */
+  overflow-y: auto;
+}
+
 .centered-flex {
   display: flex;
   justify-content: center;

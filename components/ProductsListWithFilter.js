@@ -6,11 +6,18 @@ import 'primeflex/primeflex.css';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
+import { InputNumber } from 'primereact/inputnumber';
+import { Dropdown } from 'primereact/dropdown';
 
 const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange, filterHierarchy }) => {
     const [globalFilterValue, setGlobalFilterValue] = useState('');
     const [first, setFirst] = useState(0);
     const [rows, setRows] = useState(3);
+    const [rowsOptions, setRowsOptions] = useState([
+        { label: '3', value: 3 },
+        { label: '5', value: 5 },
+        { label: '10', value: 10 }
+      ]);
 
     const filteredProducts = useMemo(() => {
         if (!filterHierarchy) return products;
@@ -60,12 +67,21 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
                 selection={selectedProducts}
                 onSelectionChange={(e) => onSelectionChange(e.value)}
                 dataKey="ID"
-                responsiveLayout="stack"
                 style={{ maxWidth: '100%' }}
                 filters={filters}
                 filterDisplay="menu"
                 globalFilter={globalFilterValue}
-                header={<InputText type="search" onInput={(e) => setGlobalFilterValue(e.target.value)} placeholder="Globalne wyszukiwanie" />}
+                header={<div className="flex justify-content-between">
+                <InputText type="search" onInput={(e) => setGlobalFilterValue(e.target.value)} placeholder="Globalne wyszukiwanie" />
+                <Dropdown 
+                  value={rows} 
+                  options={rowsOptions} 
+                  onChange={(e) => setRows(e.value)} 
+                  placeholder="Row count"
+                  className='ml-2'
+                  style={{ width: 'auto' }}
+                />
+              </div>}
             >
                 <Column selectionMode="multiple" headerStyle={{ width: '3em' }}></Column>
                 {columnFields.map((field) => (

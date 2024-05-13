@@ -93,7 +93,7 @@ export const initalizeSession = async (req, res, userId) => {
       );
       const account = await db.user.findUnique({
         where: {
-          accountId: String(userId),
+          accountId: String('16023333'), // TODO: userId
         },
       });
       // 1.3. If no entry exists in DB, the user hasn't even authorized once

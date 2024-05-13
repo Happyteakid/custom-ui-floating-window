@@ -9,7 +9,7 @@ import 'primeicons/primeicons.css';
 import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
 
-const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange, filterHierarchy }) => {
+const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange, filterHierarchy, company, productEnums }) => {
     const [globalFilterValue, setGlobalFilterValue] = useState('');
     const [first, setFirst] = useState(0);
     const [rows, setRows] = useState(3);
@@ -18,16 +18,25 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
         { label: '5', value: 5 },
         { label: '10', value: 10 }
       ]);
+      console.log('productEnums:', productEnums);
 
-    const filteredProducts = useMemo(() => {
-        if (!filterHierarchy) return products;
-        return products.filter(product => product.Hierarchia === 'Beta');
-      }, [products, filterHierarchy]);
+      const filteredProducts = useMemo(() => {
+        let filtered = products;
+        if (company) {
+            filtered = filtered.filter(product => product.Firma === company);
+        }
+
+        if (globalFilterValue) {
+            filtered = filtered.filter(product => product.name.toLowerCase().includes(globalFilterValue.toLowerCase()));
+        }
+
+        return filtered;
+      }, [products, company, globalFilterValue])
 
     const columnFields = useMemo(() => {
         if (products.length > 0) {
             return Object.keys(products[0]).filter(key =>
-                !['active_flag', 'prices', 'product_variations', 'owner_id', 'selectable', 'files_count', 'add_time', 'visible_to', 'first_char', 'update_time', 'Właściciel'].includes(key));
+                !['active_flag', 'prices', 'product_variations', 'owner_id','prices', 'selectable','Aktywne', 'Produkt kompatybilny z', 'files_count', 'add_time','Cykle rozliczeniowe', 'Hierarchia', 'visible_to', 'first_char', 'Częstotliwość rozliczeń','Widoczne dla', 'update_time', 'Podatek', 'Kategoria', 'Właściciel'].includes(key));
         }
         return [];
     }, [products]);

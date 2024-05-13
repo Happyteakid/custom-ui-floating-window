@@ -27,15 +27,23 @@ const AddProduct = () => {
   const [hierarchy, setHierarchy] = useState('196');
   const [filterHierarchy, setFilterHierarchy] = useState(false);
   const [loading, setLoading] = useState(true);
+  var productFieldsData;
 
 const [companyOptions] = useState([
-  { label: 'HTM', value: 'htm' },
-  { label: 'NTM', value: 'ntm' }
+  { label: 'HTM', value: 'HTM' },
+  { label: 'NTM', value: 'NTM' }
 ]);
 const [company, setCompany] = useState();
 const [isCreating, setIsCreating] = useState(false);
 
-
+const [placeholderOptions] = useState([
+  { name: 'Centrum tokarskie', code: 'NY' },
+        { name: 'Centrum wielozadaniowe', code: 'RM' },
+        { name: 'Centrum obróbkowe', code: 'LDN' },
+        { name: 'Centrum bramowe', code: 'IST' },
+        { name: 'Centrum szlifierskie', code: 'PRS' }
+]);
+const [selectedPlaceholder, setSelectedPlaceholder] = useState(null);
 
 async function addProductsToDeal() {
   if (isCreating || !selectedProducts.length) return;
@@ -99,7 +107,6 @@ async function addProductsToDeal() {
       console.log('productFieldsData: ',productFieldsData);
       // Update otherProducts with correct values for enums
       const updatedOtherProductsData = updateProductsWithFieldValues(otherProductsData, productFieldsData);
-      //console.log(productFieldsData);
       console.log('UpdatedOtherProductsData: ',updatedOtherProductsData);
 
 
@@ -171,10 +178,16 @@ async function addProductsToDeal() {
               className="p-button m-3"
               onClick={() => addProductsToDeal()}
             />
+            <Dropdown
+            value={selectedPlaceholder} onChange={(e) => setSelectedPlaceholder(e.value)} options={placeholderOptions} optionLabel="typ" 
+            showClear placeholder="Typ" className="w-14rem h-4rem m-3"
+            />
             </div>
             <ProductsListWithFilter
               products={otherProducts}
               selectedProducts={selectedProducts}
+              company={company}
+              productEnums = {productFieldsData}
               onSelectionChange={setSelectedProducts}
             />
             <GoBackButton />

@@ -9,6 +9,7 @@ import 'primeicons/primeicons.css';
 const DealProductsList = ({ dealProducts, dealId }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   if (dealProducts.length === 0) return null;
 
@@ -16,25 +17,27 @@ const DealProductsList = ({ dealProducts, dealId }) => {
     console.log('Selected products to delete:', selectedProducts);
     if (isCreating || !selectedProducts.length) return;
     setIsCreating(true);
-    
+    setLoading(true);
     try {
       const responses = await Promise.all(selectedProducts.map(async (item) => {
         const requestBody = {
           dealId: dealId,
-          product_attachment_id: item.id, // Assuming each item has an `id` field
+          product_attachment_id: item.id,
         };
-
+        const preparedJsonBody = JSON.stringify(requestBody);
+        console.log(requestBody);
+  
         return fetch('/api/deleteDealProduct', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestBody),
+          body: preparedJsonBody,
         });
       }));
-
+  
       const data = await Promise.all(responses.map(res => res.json()));
-
+  
       // Log each response
       data.forEach((responseData, index) => {
         if (responses[index].ok) {
@@ -43,11 +46,15 @@ const DealProductsList = ({ dealProducts, dealId }) => {
           console.error(`Failed to delete product ${selectedProducts[index].id}`, responseData);
         }
       });
+  
     } catch (error) {
-      console.error('Error deleting deal products:', error);
+      console.error('Error posting deal products:', error);
     } finally {
+      setLoading(false);
       setIsCreating(false);
+      location.reload();
     }
+
   };
 
   return (
@@ -56,6 +63,7 @@ const DealProductsList = ({ dealProducts, dealId }) => {
         <h4 className="text-2xl font-semibold mt-4 mb-2">Produkty w ofercie:</h4>
       </div>
       <DataTable
+        loading={loading}
         value={dealProducts}
         responsiveLayout="scroll"
         selection={selectedProducts}
@@ -64,9 +72,10 @@ const DealProductsList = ({ dealProducts, dealId }) => {
         scrollHeight="250px" style={{ maxWidth: '1200px' }}
       >
         <Column selectionMode="multiple" headerStyle={{ width: '3em' }}></Column>
-        <Column field="id" header="ID" style={{ maxWidth: '5px' }}></Column>
+        <Column field="id" header="ID" style={{ maxWidth: '5px', display:'none'}} ></Column>
+        <Column field="product_id" header="ID" style={{ maxWidth: '5px' }}></Column>
         <Column field="name" header="Nazwa" style={{ maxWidth: '100px' }}></Column>
-        <Column field="price" header="Cena" style={{ maxWidth: '20px' }}></Column>
+        <Column field="sum_formatted" header="Cena" style={{ maxWidth: '20px' }}></Column>
         <Column field="comments" header="Komentarz" style={{ maxWidth: '100px' }}></Column>
       </DataTable>
       {selectedProducts.length > 0 && (

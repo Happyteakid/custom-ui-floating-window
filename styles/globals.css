@@ -6,6 +6,7 @@ body {
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   font-size: 12px;
   overflow: hidden;
+  height: 100%;
 }
 
 a {
@@ -148,8 +149,19 @@ img {
 }
 
 .scrollable-container2 {
-  max-height: 93vh; /* Adjust based on your preference */
+  max-height: 95vh; 
   overflow-y: auto;
+}
+
+/* Targeting the dropdown panel */
+.p-dropdown-panel {
+  left: 15 !important; /* Adjust this value as needed to fit your layout */
+  width: auto !important; /* This ensures that the dropdown takes up only as much width as necessary */
+}
+
+/* Adjust the width of the dropdown itself if needed */
+.custom-dropdown .p-dropdown {
+  width: 100%; /* Or any other width depending on your layout */
 }
 
 .centered-flex {

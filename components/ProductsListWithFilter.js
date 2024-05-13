@@ -71,17 +71,17 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
                 filters={filters}
                 filterDisplay="menu"
                 globalFilter={globalFilterValue}
-                header={<div className="flex justify-content-between">
-                <InputText type="search" onInput={(e) => setGlobalFilterValue(e.target.value)} placeholder="Globalne wyszukiwanie" />
-                <Dropdown 
-                  value={rows} 
-                  options={rowsOptions} 
-                  onChange={(e) => setRows(e.value)} 
-                  placeholder="Row count"
-                  className='ml-2'
-                  style={{ width: 'auto' }}
-                />
-              </div>}
+                header={<div>
+                    <Dropdown className=''
+                        value={rows} 
+                        options={rowsOptions} 
+                        onChange={(e) => setRows(e.value)} 
+                        placeholder="Row count"
+                        style={{ width: 'auto' }}
+                        
+                    />
+                        <InputText className='ml-2' type="search" onInput={(e) => setGlobalFilterValue(e.target.value)} placeholder="Globalne wyszukiwanie" />
+                </div>}
             >
                 <Column selectionMode="multiple" headerStyle={{ width: '3em' }}></Column>
                 {columnFields.map((field) => (

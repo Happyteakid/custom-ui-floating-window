@@ -17,7 +17,7 @@ export const initAPIClient = ({ accessToken = '', refreshToken = '' }) => {
   log.info('Refresh token: '+refreshToken);
   if (refreshToken) {oAuth2.refreshToken = refreshToken}
   else{
-    oAuth2.refreshToken = '12650637:16023333:a3ca186ddbc8fb5078fa7d4f08578bcce6bf121b'; // TODO shouldnt be manualy changing refresh tokens
+    oAuth2.refreshToken = '12650637.16023333.43a55969b44ebf4f56785774af722b5c2e4e52fc';
     log.info('Forcing to change Refresh token to: '+ oAuth2.refreshToken);
   }
   
@@ -67,7 +67,6 @@ export const getLoggedInUser = async (client) => {
   const api = new UsersApi(client);
   const data = await api.getCurrentUser();
   log.info('Currently logged-in user details obtained');
-  log.info(data);
   return data;
 };
 
@@ -77,7 +76,7 @@ export const updateTokens = (client, token) => {
   const oAuth2 = client.authentications.oauth2;
   oAuth2.accessToken = token.access_token;
   oAuth2.refreshToken = token.refresh_token;
-  log.info('Refresh token value: ' + oAuth2.refreshToken);
+  log.info('Refresh token value:                ' + oAuth2.refreshToken);
 };
 
 // Get Session Details
@@ -94,7 +93,7 @@ export const initalizeSession = async (req, res, userId) => {
       );
       const account = await db.user.findUnique({
         where: {
-          accountId: String(16023333), // TODO should be userId
+          accountId: String(userId),
         },
       });
       // 1.3. If no entry exists in DB, the user hasn't even authorized once

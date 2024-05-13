@@ -27,22 +27,15 @@ const AddProduct = () => {
   const [hierarchy, setHierarchy] = useState('196');
   const [filterHierarchy, setFilterHierarchy] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [sizeOptions] = useState([
-    { label: 'Małe', value: 'small' },
-    { label: 'Średnie', value: 'normal' },
-    { label: 'Duże', value: 'large' }
-]);
+
 const [companyOptions] = useState([
   { label: 'HTM', value: 'htm' },
   { label: 'NTM', value: 'ntm' }
 ]);
-const [company, setCompany] = useState(companyOptions[0].value);
-const [size, setSize] = useState(sizeOptions[0].value);
+const [company, setCompany] = useState();
 const [isCreating, setIsCreating] = useState(false);
 
-const handleHierarchyChange = (e) => {
-  setFilterHierarchy(e.checked);
-};
+
 
 async function addProductsToDeal() {
   if (isCreating || !selectedProducts.length) return;
@@ -161,24 +154,16 @@ async function addProductsToDeal() {
   }
 
   return (
+    <div className='scrollable-container2'>
     <div className="max-w-4xl mx-auto p-4">
             <h3>Szansy sprzedaży - ID {dealId}</h3>
-            <DealProductsList dealProducts={dealProducts} />
+            <DealProductsList dealProducts={dealProducts} dealId={dealId} />
             <div className="m-3 text-xl font-bold"> Dodaj produkty</div>
             <div className='flex'>
-            <div className="flex justify-content-center m-3">
-                <SelectButton value={size} onChange={(e) => setSize(e.value)} options={sizeOptions} />
-            </div>
             <div className="flex justify-content-center m-3">
                 <SelectButton value={company} onChange={(e) => setCompany(e.value)} options={companyOptions} />
             </div>
             <div className="flex align-items-center">
-            <Checkbox
-              inputId="filtrPodprodukt1"
-              onChange={handleHierarchyChange}
-              checked={filterHierarchy}
-            />
-            <label htmlFor="filtrPodprodukt1" className="ml-2">Filtruj kompatybilne podprodukty</label>
             </div>
             <Button
               label="Dodaj produkty"
@@ -191,9 +176,9 @@ async function addProductsToDeal() {
               products={otherProducts}
               selectedProducts={selectedProducts}
               onSelectionChange={setSelectedProducts}
-              filterHierarchy={filterHierarchy}
             />
             <GoBackButton />
+        </div>
         </div>
   );
 };

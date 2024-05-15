@@ -17,9 +17,10 @@ export const initAPIClient = ({ accessToken = '', refreshToken = '' }) => {
   log.info('Refresh token: '+refreshToken);
   if (refreshToken) {oAuth2.refreshToken = refreshToken}
   else{
-    oAuth2.refreshToken = '12650637.16023333.43a55969b44ebf4f56785774af722b5c2e4e52fc';
+    oAuth2.refreshToken = '12650637:16023333:74b0d2643f7a4145c0a5b8a44f011b22fe87c0bf';
     log.info('Forcing to change Refresh token to: '+ oAuth2.refreshToken);
-  }
+  }//11817552:16176002:6bf2090fca2e63efee7d7b62268903159c01f735 sandbox lerta
+  //12650637.16023333.43a55969b44ebf4f56785774af722b5c2e4e52fc sandbox htm
   
   return client;
 };
@@ -83,6 +84,7 @@ export const updateTokens = (client, token) => {
 export const initalizeSession = async (req, res, userId) => {
   try {
     // 1.1 Check if the session cookie is already set
+    userId = '16023333';// TODO need to delete
     log.info(`Checking if a session cookie is set for ${userId}`);
     const session = getCookie('session', { req, res });
 
@@ -93,7 +95,7 @@ export const initalizeSession = async (req, res, userId) => {
       );
       const account = await db.user.findUnique({
         where: {
-          accountId: String('16023333'), // TODO: userId
+          accountId: String('16023333'), // TODO: userId htm sandbox 16023333; lerta ID 16176002
         },
       });
       // 1.3. If no entry exists in DB, the user hasn't even authorized once

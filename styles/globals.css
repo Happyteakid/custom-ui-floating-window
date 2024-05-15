@@ -174,3 +174,20 @@ img {
   display: flex;
   flex-direction: row; 
 }
+
+.custom-dropdown {
+  width: 100%; /* Responsive width */
+  max-width: 280px; /* Maximum width */
+  font-size: 1rem; /* Adjust font size as needed */
+  padding: 0.5rem; /* Padding for better text visibility */
+  border: 1px solid #ccc; /* Subtle border */
+  border-radius: 4px; /* Rounded corners */
+}
+
+.custom-dropdown .p-dropdown-label {
+  line-height: 1.25rem;  /* Adjust this value based on your specific needs */
+  padding: 0.5rem 1rem;  /* Provides padding inside the dropdown */
+  display: flex;         /* Ensures the content can be flexibly aligned */
+  align-items: center;   /* Vertically centers the label text */
+  width: 100%;           /* Ensures the label uses the full width of the dropdown */
+}

@@ -6,11 +6,9 @@ import 'primeflex/primeflex.css';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
-import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
 
-const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange, filterHierarchy, company, productEnums }) => {
-    const [globalFilterValue, setGlobalFilterValue] = useState('');
+const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange, filterHierarchy, company, productEnums, selectedType, selectedProducent, selectedSterowanie  }) => {
     const [first, setFirst] = useState(0);
     const [rows, setRows] = useState(3);
     const [rowsOptions, setRowsOptions] = useState([
@@ -18,20 +16,24 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
         { label: '5', value: 5 },
         { label: '10', value: 10 }
       ]);
-      console.log('productEnums:', productEnums);
 
       const filteredProducts = useMemo(() => {
         let filtered = products;
-        if (company) {
-            filtered = filtered.filter(product => product.Firma === company);
+        if (selectedType) {
+            filtered = filtered.filter(product => product.Typ == selectedType);
+          }
+        if (selectedProducent) {
+        filtered = filtered.filter(product => product.Producent == selectedProducent);
         }
-
-        if (globalFilterValue) {
-            filtered = filtered.filter(product => product.name.toLowerCase().includes(globalFilterValue.toLowerCase()));
+        if (selectedSterowanie) {
+        filtered = filtered.filter(product => product.Sterowanie == selectedSterowanie);
+        }
+        if (company) {
+            filtered = filtered.filter(product => product.Firma == company);
         }
 
         return filtered;
-      }, [products, company, globalFilterValue])
+      }, [products, company, selectedType, selectedProducent, selectedSterowanie])
 
     const columnFields = useMemo(() => {
         if (products.length > 0) {
@@ -79,7 +81,6 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
                 style={{ maxWidth: '100%' }}
                 filters={filters}
                 filterDisplay="menu"
-                globalFilter={globalFilterValue}
                 header={<div>
                     <Dropdown className=''
                         value={rows} 
@@ -89,7 +90,6 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
                         style={{ width: 'auto' }}
                         
                     />
-                        <InputText className='ml-2' type="search" onInput={(e) => setGlobalFilterValue(e.target.value)} placeholder="Globalne wyszukiwanie" />
                 </div>}
             >
                 <Column selectionMode="multiple" headerStyle={{ width: '3em' }}></Column>

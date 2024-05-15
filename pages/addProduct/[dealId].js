@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { Dropdown } from 'primereact/dropdown';
 import 'primeflex/primeflex.css';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
@@ -11,10 +8,9 @@ import 'primeicons/primeicons.css';
 import { SelectButton } from 'primereact/selectbutton';
 import DealProductsList from '../../components/DealProductsList';
 import ProductsListWithFilter from '../../components/ProductsListWithFilter';
+import EnumDropdown from '../../components/EnumDropdown';
 import GoBackButton from '../../components/GoBackButton';
-import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
-import { Checkbox } from 'primereact/checkbox'
 
 
 const AddProduct = () => {
@@ -26,6 +22,9 @@ const AddProduct = () => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [hierarchy, setHierarchy] = useState('196');
   const [filterHierarchy, setFilterHierarchy] = useState(false);
+  const [selectedType, setSelectedType] = useState(null);
+  const [selectedProducent, setSelectedProducent] = useState(null);
+  const [selectedSterowanie, setSelectedSterowanie] = useState(null);
   const [loading, setLoading] = useState(true);
   var productFieldsData;
 
@@ -172,15 +171,29 @@ async function addProductsToDeal() {
             </div>
             <div className="flex align-items-center">
             </div>
+            <EnumDropdown
+            enumName = "Typ"
+            productFieldsData={productFields}
+            placeholderText="Wybierz typ"
+            onChange={setSelectedType}
+            />
+            <EnumDropdown
+            enumName = "Producent"
+            productFieldsData={productFields}
+            placeholderText="Wybierz producenta"
+            onChange={setSelectedProducent}
+            />
+            <EnumDropdown
+            enumName = "Sterowanie"
+            productFieldsData={productFields}
+            placeholderText="Wybierz sterowanie"
+            onChange={setSelectedSterowanie}
+            />
             <Button
               label="Dodaj produkty"
               icon="pi pi-plus"
               className="p-button m-3"
               onClick={() => addProductsToDeal()}
-            />
-            <Dropdown
-            value={selectedPlaceholder} onChange={(e) => setSelectedPlaceholder(e.value)} options={placeholderOptions} optionLabel="typ" 
-            showClear placeholder="Typ" className="w-14rem h-4rem m-3"
             />
             </div>
             <ProductsListWithFilter
@@ -189,6 +202,9 @@ async function addProductsToDeal() {
               company={company}
               productEnums = {productFieldsData}
               onSelectionChange={setSelectedProducts}
+              selectedType={selectedType}
+              selectedProducent={selectedProducent}
+              selectedSterowanie={selectedSterowanie}
             />
             <GoBackButton />
         </div>

@@ -124,7 +124,8 @@ const DealFields = (props) => {
           >
             <div className="ms-2 me-auto">
               <div className="fw-bold text-lg" onClick={() => handleDealClick(d.id)}>{d.id}| {d.title} - wartość: {d.formatted_value}</div>
-              {value === 'Włącz' && <div className='fw-bold'>ID etapu w lejku: {d.stage_id}</div>}
+              {/*TODO Tryb akceptacji ofert chwilowo wyłączony*/}
+              {/*value === 'Włącz' && <div className='fw-bold'>ID etapu w lejku: {d.stage_id}</div>}
               <div>{d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] === '200' ? <span><strong>Status:</strong> Złożono wniosek</span> : null}</div>
               {value === 'Włącz' && d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] === '200' && (
                 <div className='m-2'>
@@ -140,7 +141,7 @@ const DealFields = (props) => {
                       <Button className='m-2 p-button-danger' label='Odrzuć możliwość stworzenia oferty' onClick={(e) => handleRejectOfferClick(e, d.id)} />
                       </div>
                 </div>
-              )}
+              )*/}
             </div>
           </div>
         ))}
@@ -157,11 +158,11 @@ const DealFields = (props) => {
             <span className="navbar-brand"> 🟢 Witaj, {props.user.name} </span>
           </div>
         </nav>
-        <div className="flex">
-          <div className='centered-flex fw-bold text-xl'> Tryb akceptacji ofert:</div>
-        <SelectButton className='m-3' value={value} onChange={(e) => setValue(e.value)} options={options} />
+        <div className="flex">{/* TODO: TRYB AKCEPTACJI OFERT WYŁĄCZONY CHWILOWO*/}
+          {/*<div className='centered-flex fw-bold text-xl'> Tryb akceptacji ofert:</div>
+        <SelectButton className='m-3' value={value} onChange={(e) => setValue(e.value)} options={options} />*/}
         </div>
-        <div className="input-group mb-3">
+        <div className="input-group mb-3 mt-3">
           <div className='fw-bold centered-flex m-2'>
           Filtruj:
           </div>

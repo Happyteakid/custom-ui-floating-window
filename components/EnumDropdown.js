@@ -28,6 +28,9 @@ const EnumDropdown = ({ enumName, productFieldsData, placeholderText, onChange }
     if(enumName == 'Sterowanie'){
     setSterowanie(e.value);
     }
+    if(enumName == 'Grupa'){
+      setSelectedGrupa(e.value);
+    }
     
     onChange(e.value);
     console.log('Dropdown handle change:', e.value);
@@ -41,6 +44,7 @@ const EnumDropdown = ({ enumName, productFieldsData, placeholderText, onChange }
       placeholder={placeholderText}
       className='custom-dropdown m-3'
       showClear
+      filter
     />
   );
 };

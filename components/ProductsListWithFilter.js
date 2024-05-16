@@ -8,37 +8,48 @@ import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
 import { Dropdown } from 'primereact/dropdown';
 
-const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange, filterHierarchy, company, productEnums, selectedType, selectedProducent, selectedSterowanie  }) => {
+const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange, filterHierarchy, company, productEnums, selectedType, selectedProducent, selectedSterowanie, selectedGrupa, grupaMateriałowa }) => {
     const [first, setFirst] = useState(0);
     const [rows, setRows] = useState(3);
-    const [rowsOptions, setRowsOptions] = useState([
+    const [rowsOptions] = useState([
         { label: '3', value: 3 },
         { label: '5', value: 5 },
         { label: '10', value: 10 }
-      ]);
+    ]);
 
-      const filteredProducts = useMemo(() => {
+    const filteredProducts = useMemo(() => {
+        console.log('ProductsListWithFilter selectedGrupa ', selectedGrupa);
         let filtered = products;
         if (selectedType) {
-            filtered = filtered.filter(product => product.Typ == selectedType);
-          }
+            filtered = filtered.filter(product => product.Typ === selectedType);
+        }
         if (selectedProducent) {
-        filtered = filtered.filter(product => product.Producent == selectedProducent);
+            filtered = filtered.filter(product => product.Producent === selectedProducent);
         }
         if (selectedSterowanie) {
-        filtered = filtered.filter(product => product.Sterowanie == selectedSterowanie);
+            filtered = filtered.filter(product => product.Sterowanie === selectedSterowanie);
+        }
+        if (selectedGrupa) {
+            filtered = filtered.filter(product => product.Grupa === selectedGrupa);
         }
         if (company) {
-            filtered = filtered.filter(product => product.Firma == company);
+            filtered = filtered.filter(product => product.Firma === company);
         }
-
+        if (grupaMateriałowa) {
+            filtered = filtered.filter(product => product["Grupa materiałowa"] === grupaMateriałowa);
+            const firstFewEntries = filtered.slice(0, 10);
+            firstFewEntries.forEach(product => {
+                console.log('Filtered result: ', product["Grupa materiałowa"]); // Should log the property value for the first 10 products
+            });
+            console.log('ProductsListWithFilter grupaMateriałowa', grupaMateriałowa);
+        }
         return filtered;
-      }, [products, company, selectedType, selectedProducent, selectedSterowanie])
+    }, [products, company, selectedType, selectedProducent, selectedSterowanie, selectedGrupa, grupaMateriałowa]);
 
     const columnFields = useMemo(() => {
         if (products.length > 0) {
             return Object.keys(products[0]).filter(key =>
-                !['active_flag', 'prices', 'product_variations', 'owner_id','prices', 'selectable','Aktywne', 'Produkt kompatybilny z', 'files_count', 'add_time','Cykle rozliczeniowe', 'Hierarchia', 'visible_to', 'first_char', 'Częstotliwość rozliczeń','Widoczne dla', 'update_time', 'Podatek', 'Kategoria', 'Właściciel'].includes(key));
+                !['active_flag', 'prices', 'product_variations', 'owner_id', 'prices', 'selectable', "Jednostka", 'Aktywne', 'Produkt kompatybilny z', 'files_count', 'add_time', 'Cykle rozliczeniowe', 'Hierarchia', 'visible_to', 'first_char', 'Częstotliwość rozliczeń', 'Widoczne dla', 'update_time', 'Podatek', 'Kategoria', 'Właściciel'].includes(key));
         }
         return [];
     }, [products]);
@@ -88,7 +99,6 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
                         onChange={(e) => setRows(e.value)} 
                         placeholder="Row count"
                         style={{ width: 'auto' }}
-                        
                     />
                 </div>}
             >

@@ -6,7 +6,7 @@ import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
 
-const DealProductsList = ({ dealProducts, dealId }) => {
+const DealProductsList = ({ dealProducts, setDealProducts, dealId }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,14 +47,19 @@ const DealProductsList = ({ dealProducts, dealId }) => {
         }
       });
   
+      // Filter out deleted products from state
+      const updatedDealProducts = dealProducts.filter(
+        (product) => !selectedProducts.some((selected) => selected.id === product.id)
+      );
+      setDealProducts(updatedDealProducts);
+      setSelectedProducts([]);
+  
     } catch (error) {
-      console.error('Error posting deal products:', error);
+      console.error('Error deleting deal products:', error);
     } finally {
       setLoading(false);
       setIsCreating(false);
-      location.reload();
     }
-
   };
 
   return (

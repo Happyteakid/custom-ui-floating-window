@@ -18,7 +18,7 @@ const handler = async (req, res) => {
     let allDeals = [];
     let moreItems = true;
     let start = 0;
-    const limit = 100; // Adjust based on API capabilities
+    const limit = 500; // Adjust based on API capabilities
 
     log.info('Getting all deals');
     while (moreItems) {

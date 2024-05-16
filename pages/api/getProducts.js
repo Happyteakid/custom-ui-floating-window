@@ -16,12 +16,12 @@ const handler = async (req, res) => {
     let allProducts = [];
     let moreItems = true;
     let start = 0;
-    const limit = 100; // Pipedrive's default limit per call
+    const limit = 500;
 
     log.info('Getting all products');
     while (moreItems) {
       const response = await api.getProducts({
-        limit: limit,
+        limit: limit, //TODO hardcoded limit {limit}
         start: start,
       });
 
@@ -29,12 +29,11 @@ const handler = async (req, res) => {
         allProducts = allProducts.concat(response.data);
         start += response.data.length;
 
-        // Check if the fetched products are less than the limit, indicating the last page
         if (response.data.length < limit) {
           moreItems = false;
         }
       } else {
-        moreItems = false; // Exit the loop if no data
+        moreItems = false;
       }
     }
 

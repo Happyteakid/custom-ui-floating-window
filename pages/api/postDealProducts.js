@@ -9,10 +9,10 @@ const log = logger('Post Deal Products API 🛍️');
 const handler = async (req, res) => {
   try {
     const client = getAPIClient(req, res);
-    const { dealId, productId, productPrice } = req.body;
+    let { dealId, productId, productPrice, comment, discount } = req.body;
     const API_TOKEN = process.env.PIPEDRIVE_TOKEN;
     
-
+    log.info(req.body);
     const BASE_URL = 'https://natalia-sandbox3.pipedrive.com/api/v1';
     log.info(`${BASE_URL}/deals/${dealId}/products?api_token=${API_TOKEN}`)
 
@@ -23,8 +23,10 @@ const handler = async (req, res) => {
       },
       body: JSON.stringify({
         "product_id": productId,
-        "item_price": productPrice,
-        "quantity": 1
+        "item_price": productPrice || 0,
+        "quantity": 1,
+        "comment": comment || null,
+        "discount": discount || 0
       }),
     });
 

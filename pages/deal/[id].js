@@ -3,8 +3,12 @@ import { useEffect, useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
-import { Tooltip } from 'primereact/tooltip'; // Import Tooltip from PrimeReact
+import { InputText } from 'primereact/inputtext';
 import GoBackButton from '../../components/GoBackButton';
+import 'primeflex/primeflex.css';
+import 'primereact/resources/themes/lara-light-indigo/theme.css';
+import 'primereact/resources/primereact.css';
+import 'primeicons/primeicons.css';
 
 const DealDetails = () => {
   const router = useRouter();
@@ -23,7 +27,6 @@ const DealDetails = () => {
           const detailsData = await detailsResponse.json();
           setDealDetails(detailsData);
 
-          // Prepare data for the DataTable
           const detailsArray = [
             { label: 'ID', value: detailsData.id },
             { label: 'ID lejka', value: detailsData.pipeline_id },
@@ -78,12 +81,81 @@ const DealDetails = () => {
     fetchDealDetailsAndProducts();
   }, [id]);
 
+  const onCellEditComplete = (e) => {
+    console.log('event', e);
+    const { rowData, newValue, field, originalEvent: event } = e;
+
+    // Prevent default behavior to ensure editor callback works correctly
+    event.preventDefault();
+
+    const updatedProducts = [...dealProducts];
+    const index = updatedProducts.findIndex(product => product.id === rowData.id);
+    updatedProducts[index][field] = newValue;
+    setDealProducts(updatedProducts);
+/*
+    if (field === 'item_price' || field === 'discount' || field === 'sum') {
+      const totalFetchedSum = updatedProducts.reduce((acc, product) => acc + (product.price || 0), 0);
+      const totalItemSum = updatedProducts.reduce((acc, product) => acc + (product.sum || 0), 0);
+      const percentageDiff = ((totalFetchedSum - totalItemSum) / totalFetchedSum) * 100;
+
+      setSum(totalFetchedSum);
+      setPercentageDifference(percentageDiff);
+    }*/
+
+    console.log('Updated dealProducts:', updatedProducts);
+  };
+
+  const saveDealProducts = async () => {
+    try {
+      const responses = await Promise.all(dealProducts.map(async (product) => {
+        const requestBody = {
+          dealId: id,
+          productId: product.id,
+          itemPrice: product.item_price,
+          discount: product.discount,
+          comments: product.comments
+        };
+
+        const preparedJsonBody = JSON.stringify(requestBody);
+        console.log(requestBody);
+
+        return fetch('/api/updateDealProduct', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: preparedJsonBody,
+        });
+      }));
+
+      const data = await Promise.all(responses.map(res => res.json()));
+      console.log('Save responses:', data);
+      location.reload()
+    } catch (error) {
+      console.error('Error saving deal products:', error);
+    }
+  };
+
+  const textEditor = (options, width, type = 'text') => {
+    return (
+      <InputText
+        type={type}
+        value={options.value}
+        style={{ width }}
+        onChange={(e) => {
+          options.editorCallback(e.target.value);
+          console.log('Changed value:', e.target.value); // Log each change
+        }}
+      />
+    );
+  };
+
   return (
     <div className='scrollable-container2'>
       <div className="max-w-4xl mx-auto p-4">
         <h1 className="text-3xl font-bold mb-4">Szansa sprzedaży</h1>
         <DataTable value={dealDetailsForTable} style={{ maxWidth: '400px' }}>
-          <Column field="label" header="Pole" className="fw-bold"/>
+          <Column field="label" header="Pole" className="fw-bold" />
           <Column field="value" header="Wartość" />
         </DataTable>
         {percentageDifference < 8 && (
@@ -105,20 +177,22 @@ const DealDetails = () => {
           {dealProducts.length > 0 && (
             <>
               <h2 className="text-2xl font-semibold mt-4 mb-2">Produkty:</h2>
-              <DataTable value={dealProducts} scrollable scrollHeight="300px">
-                <Column field="name" header="Nazwa produktu" />
-                <Column field="item_price" header="Cena" />
-                <Column field="discount" header="Rabat" />
+              <DataTable value={dealProducts} scrollable scrollHeight="300px" editMode="cell">
+                <Column field="id" header="ID" />
+                <Column field="name" style={{ width: '25%' }} header="Nazwa produktu" />
+                <Column field="item_price" header="Cena" onCellEditComplete={onCellEditComplete} editor={(options) => textEditor(options, '120px', 'number')} />
+                <Column field="discount" header="Rabat"  onCellEditComplete={onCellEditComplete}editor={(options) => textEditor(options, '75px', 'number')} />
                 <Column field="sum" header="Cena z rabatem" />
                 <Column field="currency" header="Waluta" />
                 <Column field="product_id" header="ID produktu" />
                 <Column field="quantity" header="Ilość" />
-                <Column field="comments" header="Komentarz" />
+                <Column field="comments" style={{ width: '25%' }} header="Komentarz" onCellEditComplete={onCellEditComplete} editor={(options) => textEditor(options, '450px', 'text')} />
               </DataTable>
             </>
           )}
         </div>
         <div className='m-3 '>
+          <button onClick={saveDealProducts} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded cursor-pointer mr-4">Zapisz</button>
           <button onClick={() => router.push(`/addProduct/${id}`)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
             Dodaj produkt
           </button>

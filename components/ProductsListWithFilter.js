@@ -49,7 +49,7 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
     const columnFields = useMemo(() => {
         if (products.length > 0) {
             return Object.keys(products[0]).filter(key =>
-                !['active_flag', 'prices', 'product_variations', 'owner_id', 'prices', 'selectable', "Jednostka", 'Aktywne', 'Produkt kompatybilny z', 'files_count', 'add_time', 'Cykle rozliczeniowe', 'Hierarchia', 'visible_to', 'first_char', 'Częstotliwość rozliczeń', 'Widoczne dla', 'update_time', 'Podatek', 'Kategoria', 'Właściciel'].includes(key));
+                !['active_flag', 'product_variations', 'owner_id', 'prices', 'Price','price', 'selectable', "Jednostka", 'Aktywne', 'Produkt kompatybilny z', 'files_count', 'add_time', 'Cykle rozliczeniowe', 'Hierarchia', 'visible_to', 'first_char', 'Częstotliwość rozliczeń', 'Widoczne dla', 'update_time', 'Podatek', 'Kategoria', 'Właściciel'].includes(key));
         }
         return [];
     }, [products]);
@@ -109,6 +109,7 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
                         field={field}
                         header={field.charAt(0).toUpperCase() + field.slice(1)}
                         filter
+                        sortable
                         filterMatchMode="contains"
                     />
                 ))}

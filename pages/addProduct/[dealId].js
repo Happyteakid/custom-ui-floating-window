@@ -40,15 +40,6 @@ const AddProduct = () => {
   const [company, setCompany] = useState();
   const [isCreating, setIsCreating] = useState(false);
 
-  const [placeholderOptions] = useState([
-    { name: 'Centrum tokarskie', code: 'NY' },
-    { name: 'Centrum wielozadaniowe', code: 'RM' },
-    { name: 'Centrum obróbkowe', code: 'LDN' },
-    { name: 'Centrum bramowe', code: 'IST' },
-    { name: 'Centrum szlifierskie', code: 'PRS' }
-  ]);
-  const [selectedPlaceholder, setSelectedPlaceholder] = useState(null);
-
   const fetchDealProducts = async () => {
     try {
       const dealProductsResponse = await fetch(`/api/getDealProducts?dealId=${dealId}`);
@@ -107,7 +98,9 @@ const AddProduct = () => {
         const requestBody = {
           dealId: dealId,
           productId: item.ID,
-          productPrice: item["Cennik sprzedaży"]
+          productPrice: item["Cennik sprzedaży"],
+          discount: 0,
+          comment: ""
         };
 
         const preparedJsonBody = JSON.stringify(requestBody);

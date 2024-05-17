@@ -48,7 +48,8 @@ const DealFields = (props) => {
     fetchDeals();
   }, []);
   useEffect(() => {
-    let filteredDeals = [...originalDeals];
+    //NO NEED TO USE THE FILTER
+    /*let filteredDeals = [...originalDeals];
     if (search) {
       filteredDeals = filteredDeals.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
     }
@@ -60,7 +61,7 @@ const DealFields = (props) => {
       setShouldFetchProducts(false); // No need to fetch products
     }
   
-    setDeals(filteredDeals);
+    setDeals(filteredDeals);*/
   }, [search, value, originalDeals]);
   
   async function updateDeal(){
@@ -114,6 +115,7 @@ const DealFields = (props) => {
   };
 
   const DealList = ({ dealList }) => {
+    if(dealList.length > 0) {
     return (
       <ol className="contact-list list-group">
         {dealList.map((d) => (
@@ -146,7 +148,7 @@ const DealFields = (props) => {
           </div>
         ))}
       </ol>
-    );
+    );}
   };
 
 

@@ -3,8 +3,6 @@ import logger from '../../shared/logger';
 import { getAPIClient } from '../../shared/oauth';
 
 const log = logger('Update Deal API 📝');
-//3e4d581903c274d0b40695f7341245f6c2716c88 = Umożliwienie tworzenia ofert
-//6495917a3d232c7f10b4dbfc7c828a0f29f16eb9 = Status wniosku
 /**
  * Update the deal in Pipedrive
  * Return the response

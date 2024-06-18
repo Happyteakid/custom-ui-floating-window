@@ -48,20 +48,19 @@ const DealFields = (props) => {
     fetchDeals();
   }, []);
   useEffect(() => {
-    //NO NEED TO USE THE FILTER
-    /*let filteredDeals = [...originalDeals];
+    let filteredDeals = [...originalDeals];
     if (search) {
       filteredDeals = filteredDeals.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
     }
-  
+  /*
     if (value === 'Włącz') {
       filteredDeals = filteredDeals.filter(d => d['6495917a3d232c7f10b4dbfc7c828a0f29f16eb9'] != null);
       setShouldFetchProducts(true); // Indicate that products need fetching after updating deals
     } else {
       setShouldFetchProducts(false); // No need to fetch products
-    }
+    }*/
   
-    setDeals(filteredDeals);*/
+    setDeals(filteredDeals);
   }, [search, value, originalDeals]);
   
   async function updateDeal(){

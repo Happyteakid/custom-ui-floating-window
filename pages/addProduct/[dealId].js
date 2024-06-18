@@ -1,44 +1,43 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { Dropdown } from 'primereact/dropdown';
-import 'primeflex/primeflex.css';
-import 'primereact/resources/themes/lara-light-indigo/theme.css';
-import 'primereact/resources/primereact.css';
-import 'primeicons/primeicons.css';
 import { SelectButton } from 'primereact/selectbutton';
 import DealProductsList from '../../components/DealProductsList';
 import ProductsListWithFilter from '../../components/ProductsListWithFilter';
 import EnumDropdown from '../../components/EnumDropdown';
 import GoBackButton from '../../components/GoBackButton';
 import { Button } from 'primereact/button';
+import { useAppContext } from '../../shared/context';
+import { Dialog } from 'primereact/dialog';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { InputText } from 'primereact/inputtext';
+import { FloatLabel } from 'primereact/floatlabel';
+import { Toast } from 'primereact/toast';
 
 const AddProduct = () => {
   const router = useRouter();
   const { dealId } = router.query;
-  const [dealProducts, setDealProducts] = useState([]);
-  const [otherProducts, setOtherProducts] = useState([]);
-  const [productFields, setProductFields] = useState([]);
+  const { dealProducts, setDealProducts, otherProducts, productFields } = useAppContext();
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [hierarchy, setHierarchy] = useState('196');
-  const [filterHierarchy, setFilterHierarchy] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
   const [selectedProducent, setSelectedProducent] = useState(null);
   const [selectedSterowanie, setSelectedSterowanie] = useState(null);
   const [selectedGrupa, setSelectedGrupa] = useState(null);
-  const [loading, setLoading] = useState(true);
-  var productFieldsData;
-
-  const [companyOptions] = useState([
-    { label: 'HTM', value: 'HTM' },
-    { label: 'NTM', value: 'NTM' }
-  ]);
-  const [grupaMateriałowaOptions] = useState([
-    { label: 'Obrabiarki', value: 'Obrabiarki' },
-    { label: 'Wypos. obrabiarek', value: 'Wypos. obrabiarek' }
-  ]);
-  const [grupaMateriałowa, setGrupaMateriałowa] = useState();
   const [company, setCompany] = useState();
+  const [grupaMateriałowa, setGrupaMateriałowa] = useState();
   const [isCreating, setIsCreating] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [offerTitle, setOfferTitle] = useState('');
+  const toast = useRef(null);
+
+  const companyOptions = [
+    { label: 'HTM', value: 'HTM' },
+    { label: 'NTM', value: 'NTM' },
+  ];
+  const grupaMateriałowaOptions = [
+    { label: 'Obrabiarki', value: 'Obrabiarki' },
+    { label: 'Wypos. obrabiarek', value: 'Wypos. obrabiarek' },
+  ];
 
   const fetchDealProducts = async () => {
     try {
@@ -56,92 +55,63 @@ const AddProduct = () => {
     }
   };
 
-  const fetchProductsAndFields = async () => {
-    try {
-      await fetchDealProducts();
-
-      const otherProductsResponse = await fetch(`/api/getProducts`);
-      if (!otherProductsResponse.ok) {
-        throw new Error(`Failed to fetch products list: ${otherProductsResponse.statusText}`);
-      }
-
-      let otherProductsData = await otherProductsResponse.json();
-
-      const productFieldsResponse = await fetch('/api/getProductFields');
-      if (!productFieldsResponse.ok) {
-        throw new Error(`Failed to fetch product fields: ${productFieldsResponse.statusText}`);
-      }
-
-      const productFieldsData = await productFieldsResponse.json();
-      setProductFields(productFieldsData);
-      console.log('productFieldsData: ', productFieldsData);
-
-      // Update otherProducts with correct values for enums
-      const updatedOtherProductsData = updateProductsWithFieldValues(otherProductsData, productFieldsData);
-      console.log('UpdatedOtherProductsData: ', updatedOtherProductsData);
-
-      setOtherProducts(updatedOtherProductsData);
-    } catch (error) {
-      console.error('Error fetching products and fields:', error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (dealId) {
+      fetchDealProducts();
     }
-  };
+  }, [dealId]);
 
-  async function addProductsToDeal() {
+  async function addOfferToDeal() {
     if (isCreating || !selectedProducts.length) return;
+    
+    if (!offerTitle.trim()) {
+      toast.current.show({ severity: 'error', summary: 'Error', detail: 'Tytuł oferty jest wymagany', life: 3000 });
+      return;
+    }
 
     setIsCreating(true);
-
+    const offerPayload = {
+      id: dealId,
+      offerString: JSON.stringify({
+        offer_name: offerTitle,
+        products: selectedProducts.map(product => ({
+          product_id: product.ID,
+          product_price: product["Cennik sprzedaży"],
+          product_comment: product.comment || "",
+          product_count: 1,
+          product_currency: "EUR",
+          product_discount: 0
+        }))
+      })
+    };
+    console.log('offerPayload: ', offerPayload);
     try {
-      const responses = await Promise.all(selectedProducts.map(async (item) => {
-        const requestBody = {
-          dealId: dealId,
-          productId: item.ID,
-          productPrice: item["Cennik sprzedaży"],
-          discount: 0,
-          comment: ""
-        };
-
-        const preparedJsonBody = JSON.stringify(requestBody);
-        console.log(requestBody);
-
-        return fetch('/api/postDealProducts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: preparedJsonBody,
-        });
-      }));
-
-      const data = await Promise.all(responses.map(res => res.json()));
-
-      // Log each response
-      data.forEach((responseData, index) => {
-        if (responses[index].ok) {
-          console.log(`Product ${selectedProducts[index].ID} added successfully`, responseData);
-        } else {
-          console.error(`Product ${selectedProducts[index].ID} not added`, responseData);
-        }
+      const response = await fetch('/api/postDealOffer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(offerPayload),
       });
+
+      if (!response.ok) {
+        toast.current.show({ severity: 'error', summary: 'Error', detail: 'Nie udało się stworzyć oferty.', life: 3000 });
+        throw new Error(`Failed to post deal offer: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Offer created successfully', data);
 
       // Fetch updated deal products after adding new products
       await fetchDealProducts();
-
     } catch (error) {
-      console.error('Error posting deal products:', error);
+      console.error('Error posting deal offer:', error);
     } finally {
       setIsCreating(false);
-      setLoading(false);
+      setShowPopup(false);
     }
+    toast.current.show({ severity: 'success', summary: 'Success', detail: 'Utworzono pomyślnie ofertę', life: 3000 });
   }
-
-  useEffect(() => {
-    if (dealId) {
-      fetchProductsAndFields();
-    }
-  }, [dealId]);
 
   const buildFieldMappings = (fields) => {
     const keyToNameMapping = {};
@@ -163,7 +133,7 @@ const AddProduct = () => {
 
   function updateProductsWithFieldValues(products, fields) {
     const fieldMappings = buildFieldMappings(fields);
-    console.log('products: ', products);
+    //console.log('products: ', products);
     return products.map(product => {
       const updatedProduct = {};
 
@@ -182,6 +152,28 @@ const AddProduct = () => {
       return updatedProduct;
     });
   }
+
+  const renderSelectedProducts = () => {
+    return (
+      <div>
+        <InputText value={offerTitle} id='offerTitle' placeholder='Tytuł oferty' onChange={(e) => setOfferTitle(e.target.value)} className='mb-3' />
+        <DataTable value={selectedProducts} dataKey="ID">
+          <Column field="ID" header="ID" />
+          <Column field="Imię i nazwisko / Nazwa" header="Nazwa" />
+          <Column field="Kod produktu" header="Kod produktu" />
+          <Column field="Firma" header="Firma" />
+          <Column field="Grupa materiałowa" header="Grupa materiałowa" />
+          <Column field="Cennik sprzedaży" header="Cennik sprzedaży" />
+        </DataTable>
+        <Button
+          label="Stwórz ofertę"
+          icon="pi pi-plus"
+          className="p-button m-3 bg-yellow-500"
+          onClick={() => addOfferToDeal()}
+        />
+      </div>
+    );
+  };
 
   return (
     <div className='scrollable-container2'>
@@ -222,18 +214,24 @@ const AddProduct = () => {
             placeholderText="Wybierz grupę"
             onChange={setSelectedGrupa}
           />
+        </div>
+        <div>
           <Button
             label="Dodaj produkty"
             icon="pi pi-plus"
             className="p-button m-3"
             onClick={() => addProductsToDeal()}
           />
+          <Button className='p-button m-3 bg-yellow-500' onClick={() => setShowPopup(true)} icon="pi pi-plus" label="Utwórz ofertę" />
+          <Dialog header="Zaznaczone produkty" visible={showPopup} style={{ width: '50vw' }} onHide={() => setShowPopup(false)}>
+            {renderSelectedProducts()}
+          </Dialog>
         </div>
         <ProductsListWithFilter
-          products={otherProducts}
+          products={updateProductsWithFieldValues(otherProducts, productFields)}
           selectedProducts={selectedProducts}
           company={company}
-          productEnums={productFieldsData}
+          productEnums={productFields}
           onSelectionChange={setSelectedProducts}
           selectedType={selectedType}
           selectedProducent={selectedProducent}
@@ -242,6 +240,7 @@ const AddProduct = () => {
           grupaMateriałowa={grupaMateriałowa}
         />
         <GoBackButton />
+        <Toast ref={toast} />
       </div>
     </div>
   );

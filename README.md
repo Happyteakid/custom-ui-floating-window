@@ -55,3 +55,16 @@ SQLite database dev.db created at file:./dev.db
 4. To install the app in the account, navigate to `http://localhost:3000/api/auth/login`. Provide the required authorization and complete the installation.
 5. Once the installation is complete, you can navigate to the Pipedrive account and click on the App icon from the App Dock section to render the floating window.
 6. The control center can be accessed via `http://localhost:3000/admin`. It lets you provide a phone number to simulate an incoming call.
+
+
+OfferExpression Key names:
+na: offer_name - The name of the offer
+pr: products - List of products
+    pId: product_id - ID of the product
+    dPId: deal_product_id - ID of the deal product object
+    pPr: product_price - Price of the product
+    pCo: product_comment - Comment of the product
+    pCn: product_count - Number of products
+    pCu: product_currency - Currency of the product
+    pDi: product_discount - Discount of the product
+ac: Active - Whether the productOffer is active

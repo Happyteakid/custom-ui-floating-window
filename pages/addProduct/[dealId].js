@@ -73,14 +73,16 @@ const AddProduct = () => {
     const offerPayload = {
       id: dealId,
       offerString: JSON.stringify({
-        offer_name: offerTitle,
-        products: selectedProducts.map(product => ({
-          product_id: product.ID,
-          product_price: product["Cennik sprzedaży"],
-          product_comment: product.comment || "",
-          product_count: 1,
-          product_currency: "EUR",
-          product_discount: 0
+        na: offerTitle,
+        ac: false,
+        pr: selectedProducts.map(product => ({
+          pId: product.ID,
+          dPId: "null",
+          pPr: product["Cennik sprzedaży"],
+          pCo: product.comment || "",
+          pCn: 1,
+          pCu: "EUR",
+          pDi: 0
         }))
       })
     };

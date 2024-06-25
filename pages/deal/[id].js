@@ -7,7 +7,7 @@ import { InputText } from 'primereact/inputtext';
 import { InputSwitch } from 'primereact/inputswitch';
 import GoBackButton from '../../components/GoBackButton';
 import { Dropdown } from 'primereact/dropdown';
-import { fetchDealDetails, fetchDealProducts } from '../../utils/fetchDealData';
+import { fetchDealDetails, fetchDealProducts, fetchProductDetails } from '../../utils/fetchDealData';
 import 'primeflex/primeflex.css';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
@@ -21,8 +21,10 @@ const DealDetails = () => {
   const [sum, setSum] = useState(0);
   const [percentageDifference, setPercentageDifference] = useState(0);
   const [fullScreen, setFullScreen] = useState(false);
-  const [ofertaDropdown, setOfertaDropdown] = useState(['Oferta 1', 'Oferta 2', 'Oferta 3']);
-  const [ofertaDropdownValue, setOfertaDropdownValue] = useState(['Oferta 1']);
+  const [ofertaDropdown, setOfertaDropdown] = useState(['Brak ofert']);
+  const [ofertaDropdownValue, setOfertaDropdownValue] = useState(null);
+  const [offers, setOffers] = useState([]);
+  const [activeProducts, setActiveProducts] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,11 +32,22 @@ const DealDetails = () => {
         try {
           const { detailsArray, offerListArray } = await fetchDealDetails(id);
           setDealDetailsForTable(detailsArray);
-          console.log('offerListArray:', offerListArray);
-          
+          console.log('Oferta:', offerListArray);
+          if (offerListArray.length > 0) {
+            // Parse the JSON strings to objects
+            const offers = offerListArray.map(offer => JSON.parse(offer));
+            
+            setOffers(offers);
+            // Extract the offer names
+            const offerNames = offers.map(offer => offer.na);
+            
+            // Update the state with the offer names
+            setOfertaDropdown(offerNames);
+          }
   
           const { productsWithPrices, totalFetchedSum, percentageDiff } = await fetchDealProducts(id);
           setDealProducts(productsWithPrices);
+          setActiveProducts(productsWithPrices);
           setSum(totalFetchedSum);
           setPercentageDifference(percentageDiff);
         } catch (error) {
@@ -45,6 +58,66 @@ const DealDetails = () => {
   
     fetchData();
   }, [id]);
+
+  const loadOfferProducts = async (selectedOffer) => {
+    const offer = offers.find(offer => offer.na === selectedOffer);
+    console.log('loadOfferProducts: ',offer);
+    if (offer) {
+      const productIds = offer.pr.map(product => product.pId);
+      const productDetails = await fetchProductDetails(productIds);
+      const productsWithPrices = offer.pr.map(product => {
+        const productInfo = productDetails.find(info => info.id === product.pId) || {};
+        console.log('loadOfferProducts, productInfo',productInfo);
+        return {
+          ...product,
+          item_price: product.pPr,
+          id: product.dPId,
+          comments: product.pCo,
+          quantity: product.pCn,
+          discount: product.pDi,
+          currency: product.pCu,
+          name: productInfo.name,
+          product_id: productInfo.id
+        };
+      });
+      setDealProducts(productsWithPrices);
+    }
+  };
+
+  const deleteOffer = async (selectedOffer) => {
+    const updatedOffers = offers.filter(offer => offer.na !== selectedOffer);
+    const updatedOfferStrings = updatedOffers.map(offer => JSON.stringify(offer));
+
+    const requestBody = {
+      id,
+      offerString: updatedOfferStrings
+    };
+
+    try {
+      const response = await fetch('/api/postDeal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete offer: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Offer deleted successfully', data);
+
+      setOffers(updatedOffers);
+      setOfertaDropdown(updatedOffers.map(offer => offer.na));
+      setOfertaDropdownValue(null);
+      setDealProducts([]);
+    } catch (error) {
+      console.error('Error deleting offer:', error);
+    }
+    location.reload();
+  };
 
   const onCellEditComplete = (e) => {
     console.log('event', e);
@@ -92,6 +165,116 @@ const DealDetails = () => {
     }
   };
 
+  const activateOffer = async () => {
+    try {
+      const selectedOffer = offers.find(offer => offer.na === ofertaDropdownValue);
+      if (selectedOffer) {
+        // Delete current deal products
+        await Promise.all(activeProducts.map(async (product) => {
+          const requestBody = {
+            dealId: id,
+            product_attachment_id: product.id
+          };
+  
+          const response = await fetch('/api/deleteDealProduct', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          });
+  
+          if (!response.ok) {
+            throw new Error(`Failed to delete product: ${response.statusText}`);
+          }
+        }));
+  
+        // Save new deal products from selected offer
+        const responses = await Promise.all(selectedOffer.pr.map(async (product) => {
+          let requestBody = {
+            dealId: id,
+            productId: product.pId,
+            productPrice: product.pPr,
+            discount: product.pDi,
+            comment: product.pCo
+          };
+          const response = await fetch('/api/postDealProducts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          });
+  
+          if (!response.ok) {
+            throw new Error(`Failed to save product: ${response.statusText}`);
+          }
+  
+          return response.json();
+        }));
+  
+        console.log('Activate offer responses:', responses);
+  
+        // Fetch updated deal products to get the new deal_product_id (dPId)
+        const productsResponse = await fetch(`/api/getDealProducts?dealId=${id}`);
+        let productsData = await productsResponse.json();
+        console.log('fetchDealProducts productsData: ', productsData);
+  
+        // Convert productsData to an array
+        productsData = Object.values(productsData);
+  
+        // Update OfferExpression field with new dPId and Active status
+        const updatedOffers = offers.map(offer => {
+          if (offer.na === ofertaDropdownValue) {
+            return {
+              ...offer,
+              ac: true,
+              pr: offer.pr.map(product => {
+                const updatedProduct = productsData.find(p => p.product_id === product.pId);
+                return {
+                  ...product,
+                  dPId: updatedProduct ? updatedProduct.id : product.dPId
+                };
+              })
+            };
+          } else {
+            return {
+              ...offer,
+              ac: false
+            };
+          }
+        });
+  
+        const updatedOfferStrings = updatedOffers.map(offer => JSON.stringify(offer));
+  
+        const requestBodyUpdateOfferExpression = {
+          id,
+          offerString: updatedOfferStrings
+        };
+  
+        console.log('requestBodyUpdateOfferExpression', requestBodyUpdateOfferExpression);
+  
+        const response = await fetch('/api/postDeal', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBodyUpdateOfferExpression),
+        });
+  
+        if (!response.ok) {
+          throw new Error(`Failed to update offer expression: ${response.statusText}`);
+        }
+  
+        const data = await response.json();
+        console.log('Offer expression updated successfully', data);
+        location.reload();
+      }
+    } catch (error) {
+      console.error('Error activating offer:', error);
+    }
+  };
+
   const textEditor = (options, width, type = 'text') => {
     return (
       <InputText
@@ -132,19 +315,38 @@ const DealDetails = () => {
         <div>
           {dealProducts.length > 0 && (
             <>
-              <h2 className="text-2xl font-semibold mt-4 mb-2">Produkty:</h2> 
-              <div>
+              <h2 className="text-2xl font-semibold mt-4 mb-2 p">Produkty:</h2> 
+              <div className='flex justify-content-left m-3'>
                 <Dropdown
                 id='ofertaDropdown'
                 className='m-2'
                 value={ofertaDropdownValue}
                 options={ofertaDropdown}
+                onChange={(e) => {
+                  setOfertaDropdownValue(e.value);
+                  loadOfferProducts(e.value);
+                }}
+                placeholder='Wybierz ofertę'
                 />
+                <Button
+                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2"
+                    onClick={activateOffer}
+                  >
+                    Aktywuj ofertę w szansie sprzedaży
+                  </Button>
+                {ofertaDropdownValue && (
+                  <Button
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2"
+                    onClick={() => deleteOffer(ofertaDropdownValue)}
+                  >
+                    Usuń ofertę
+                  </Button>
+                )}
               </div>
               <div className='m-2 font-semibold flex text-xl '>
               <InputSwitch className='mr-2' checked={fullScreen} onChange={(e) => setFullScreen(e.value)} /> Pełen ekran
               </div>
-              <DataTable value={dealProducts} scrollable scrollHeight={fullScreen ? '5500px' : '300px'} editMode="cell">
+              <DataTable id='productList' value={dealProducts} scrollable scrollHeight={fullScreen ? '5500px' : '300px'} editMode="cell">
               <Column headerStyle={{ width: '3em' }}></Column>
                 <Column field="id" header="ID" />
                 <Column field="name" style={{ width: '25%' }} header="Nazwa produktu" />
@@ -162,7 +364,7 @@ const DealDetails = () => {
         <div className='m-3 '>
           <button onClick={saveDealProducts} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded cursor-pointer mr-4">Zapisz</button>
           <button onClick={() => router.push(`/addProduct/${id}`)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
-            Dodaj produkt
+            Dodaj produkt/ofertę
           </button>
         </div>
         <GoBackButton />

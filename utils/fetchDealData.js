@@ -26,6 +26,7 @@ export const fetchDealDetails = async (id) => {
 export const fetchDealProducts = async (id) => {
   const productsResponse = await fetch(`/api/getDealProducts?dealId=${id}`);
   let productsData = await productsResponse.json();
+  console.log('fetchDealProducts: ',productsData);
 
   if (productsData && typeof productsData === 'object' && !Array.isArray(productsData)) {
     productsData = Object.values(productsData);
@@ -56,4 +57,24 @@ export const fetchDealProducts = async (id) => {
 
   
   return { productsWithPrices, totalFetchedSum, percentageDiff };
+};
+
+export const fetchProductDetails = async (productIds) => {
+
+  const pricesResponse = await fetch('/api/getProduct', {
+
+    method: 'POST',
+
+    headers: {
+
+      'Content-Type': 'application/json'
+
+    },
+
+    body: JSON.stringify({ productIds })
+
+  });
+
+  return pricesResponse.json();
+
 };

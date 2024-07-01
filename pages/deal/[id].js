@@ -12,6 +12,7 @@ import 'primeflex/primeflex.css';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
+import { Dialog } from 'primereact/dialog';
 
 const DealDetails = () => {
   const router = useRouter();
@@ -25,14 +26,18 @@ const DealDetails = () => {
   const [ofertaDropdownValue, setOfertaDropdownValue] = useState(null);
   const [offers, setOffers] = useState([]);
   const [activeProducts, setActiveProducts] = useState(null);
-
+  const [isActiveOffer, setIsActiveOffer] = useState(false);
+  const [isNewOfferCreationVisible, setIsNewOfferCreationVisible] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [offerTitle, setOfferTitle] = useState('');
+  
   useEffect(() => {
     const fetchData = async () => {
       if (id) {
         try {
           const { detailsArray, offerListArray } = await fetchDealDetails(id);
           setDealDetailsForTable(detailsArray);
-          console.log('Oferta:', offerListArray);
+          console.log('Oferta offerListArray:', offerListArray);
           if (offerListArray.length > 0) {
             // Parse the JSON strings to objects
             const offers = offerListArray.map(offer => JSON.parse(offer));
@@ -44,12 +49,31 @@ const DealDetails = () => {
             // Update the state with the offer names
             setOfertaDropdown(offerNames);
           }
-  
+
           const { productsWithPrices, totalFetchedSum, percentageDiff } = await fetchDealProducts(id);
           setDealProducts(productsWithPrices);
           setActiveProducts(productsWithPrices);
           setSum(totalFetchedSum);
           setPercentageDifference(percentageDiff);
+
+          // Check for active offer and set ofertaDropdownValue
+          let matchingOfferFound = false;
+          for (const offer of offerListArray.map(offer => JSON.parse(offer))) { 
+            if (offer.ac) {
+              const activeProductIds = productsWithPrices.map(p => p.id);
+              const offerProductIds = offer.pr.map(p => p.dPId);
+              const match = offerProductIds.every(pId => activeProductIds.includes(pId));
+              if (match) {
+                setOfertaDropdownValue(offer.na);
+                setIsActiveOffer(true);
+                matchingOfferFound = true;
+                break;
+              }
+            }
+          }
+
+          setIsNewOfferCreationVisible(!matchingOfferFound);
+
         } catch (error) {
           console.error("Failed to fetch deal details or products:", error);
         }
@@ -60,14 +84,22 @@ const DealDetails = () => {
   }, [id]);
 
   const loadOfferProducts = async (selectedOffer) => {
+    if (selectedOffer === 'None') {
+      // Load original active products in the deal
+      const { productsWithPrices } = await fetchDealProducts(id);
+      setDealProducts(productsWithPrices);
+      setIsActiveOffer(true);
+      return;
+    }
+
     const offer = offers.find(offer => offer.na === selectedOffer);
-    console.log('loadOfferProducts: ',offer);
+    console.log('loadOfferProducts: ', offer);
     if (offer) {
       const productIds = offer.pr.map(product => product.pId);
       const productDetails = await fetchProductDetails(productIds);
       const productsWithPrices = offer.pr.map(product => {
         const productInfo = productDetails.find(info => info.id === product.pId) || {};
-        console.log('loadOfferProducts, productInfo',productInfo);
+        console.log('loadOfferProducts, productInfo', productInfo);
         return {
           ...product,
           item_price: product.pPr,
@@ -81,6 +113,7 @@ const DealDetails = () => {
         };
       });
       setDealProducts(productsWithPrices);
+      setIsActiveOffer(offer.ac);
     }
   };
 
@@ -113,6 +146,7 @@ const DealDetails = () => {
       setOfertaDropdown(updatedOffers.map(offer => offer.na));
       setOfertaDropdownValue(null);
       setDealProducts([]);
+      setIsNewOfferCreationVisible(true);
     } catch (error) {
       console.error('Error deleting offer:', error);
     }
@@ -122,32 +156,34 @@ const DealDetails = () => {
   const onCellEditComplete = (e) => {
     console.log('event', e);
     const { rowData, newValue, field, originalEvent: event } = e;
-
+  
     // Prevent default behavior to ensure editor callback works correctly
     event.preventDefault();
-
+  
     const updatedProducts = [...dealProducts];
     const index = updatedProducts.findIndex(product => product.id === rowData.id);
-    updatedProducts[index][field] = newValue;
+    updatedProducts[index][field] = field === 'discount' ? parseFloat(newValue) : newValue;
+    updatedProducts[index][field] = field === 'item_price' ? parseFloat(newValue) : newValue;
     setDealProducts(updatedProducts);
-
+  
     console.log('Updated dealProducts:', updatedProducts);
-  };
+  };  
 
   const saveDealProducts = async () => {
     try {
+      // Save deal products
       const responses = await Promise.all(dealProducts.map(async (product) => {
         const requestBody = {
           dealId: id,
           productId: product.id,
-          itemPrice: product.item_price,
-          discount: product.discount,
+          itemPrice: parseFloat(product.item_price),
+          discount: parseFloat(product.discount),
           comments: product.comments
         };
-
+  
         const preparedJsonBody = JSON.stringify(requestBody);
         console.log(requestBody);
-
+  
         return fetch('/api/updateDealProduct', {
           method: 'POST',
           headers: {
@@ -156,47 +192,101 @@ const DealDetails = () => {
           body: preparedJsonBody,
         });
       }));
-
+  
       const data = await Promise.all(responses.map(res => res.json()));
       console.log('Save responses:', data);
+  
+      // Update OfferExpression field with updated price, discount, and comments
+      const updatedOffers = offers.map(offer => {
+        if (offer.na === ofertaDropdownValue) {
+          return {
+            ...offer,
+            pr: offer.pr.map(product => {
+              const updatedProduct = dealProducts.find(p => p.product_id === product.pId);
+              if (updatedProduct) {
+                return {
+                  ...product,
+                  pPr: parseFloat(updatedProduct.item_price),
+                  pDi: parseFloat(updatedProduct.discount),
+                  pCo: updatedProduct.comments
+                };
+              }
+              return product;
+            })
+          };
+        }
+        return offer;
+      });
+  
+      const updatedOfferStrings = updatedOffers.map(offer => JSON.stringify(offer));
+  
+      const requestBodyUpdateOfferExpression = {
+        id,
+        offerString: updatedOfferStrings
+      };
+  
+      console.log('requestBodyUpdateOfferExpression', requestBodyUpdateOfferExpression);
+  
+      const response = await fetch('/api/postDeal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBodyUpdateOfferExpression),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to update offer expression: ${response.statusText}`);
+      }
+  
+      const updateData = await response.json();
+      console.log('Offer expression updated successfully', updateData);
       location.reload();
     } catch (error) {
       console.error('Error saving deal products:', error);
     }
   };
+  
+  
 
   const activateOffer = async () => {
     try {
       const selectedOffer = offers.find(offer => offer.na === ofertaDropdownValue);
       if (selectedOffer) {
-        // Delete current deal products
-        await Promise.all(activeProducts.map(async (product) => {
-          const requestBody = {
-            dealId: id,
-            product_attachment_id: product.id
-          };
+        // Check if there are active products before attempting to delete
+        if (activeProducts && activeProducts.length > 0) {
+          // Delete current deal products
+          await Promise.all(activeProducts.map(async (product) => {
+            const requestBody = {
+              dealId: id,
+              product_attachment_id: product.id
+            };
   
-          const response = await fetch('/api/deleteDealProduct', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-          });
+            const response = await fetch('/api/deleteDealProduct', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(requestBody),
+            });
   
-          if (!response.ok) {
-            throw new Error(`Failed to delete product: ${response.statusText}`);
-          }
-        }));
+            if (!response.ok) {
+              throw new Error(`Failed to delete product: ${response.statusText}`);
+            }
+          }));
+        }
+
+        
   
         // Save new deal products from selected offer
         const responses = await Promise.all(selectedOffer.pr.map(async (product) => {
+
           let requestBody = {
             dealId: id,
             productId: product.pId,
             productPrice: product.pPr,
             discount: product.pDi,
-            comment: product.pCo
+            comments: product.pCo
           };
           const response = await fetch('/api/postDealProducts', {
             method: 'POST',
@@ -233,20 +323,27 @@ const DealDetails = () => {
                 const updatedProduct = productsData.find(p => p.product_id === product.pId);
                 return {
                   ...product,
-                  dPId: updatedProduct ? updatedProduct.id : product.dPId
+                  dPId: updatedProduct ? updatedProduct.id : undefined
                 };
               })
             };
           } else {
             return {
               ...offer,
-              ac: false
+              ac: false,
+              pr: offer.pr.map(product => {
+                const updatedProduct = productsData.find(p => p.product_id === product.pId);
+                return {
+                  ...product,
+                  dPId: updatedProduct ? updatedProduct.id : undefined
+                };
+              })
             };
           }
         });
   
         const updatedOfferStrings = updatedOffers.map(offer => JSON.stringify(offer));
-  
+        
         const requestBodyUpdateOfferExpression = {
           id,
           offerString: updatedOfferStrings
@@ -275,6 +372,30 @@ const DealDetails = () => {
     }
   };
 
+  const renderSelectedProducts = () => {
+    console.log('Button clicked, activeProducts', activeProducts);
+    return (
+      <div>
+        <InputText value={offerTitle} id='offerTitle' placeholder='Tytuł oferty' onChange={(e) => setOfferTitle(e.target.value)} className='mb-3' />
+        <DataTable value={activeProducts} dataKey="id">
+          <Column field="product_id" header="ID" />
+          <Column field="name" header="Nazwa" />
+          <Column field="quantity" header="Ilość" />
+          <Column field="sum" header="Cennik sprzedaży" />
+        </DataTable>
+        <Button
+          label="Stwórz ofertę"
+          icon="pi pi-plus"
+          className="p-button m-3 bg-yellow-500"
+          onClick={() => addOfferToDeal()}
+        />
+      </div>
+    );
+  };
+
+  
+
+
   const textEditor = (options, width, type = 'text') => {
     return (
       <InputText
@@ -285,6 +406,8 @@ const DealDetails = () => {
           options.editorCallback(e.target.value);
           console.log('Changed value:', e.target.value); // Log each change
         }}
+        disabled={!isActiveOffer}
+        tooltip={!isActiveOffer ? 'Cannot edit price, discount, or comments for an inactive offer' : ''}
       />
     );
   };
@@ -313,7 +436,7 @@ const DealDetails = () => {
           </Button>
         )}
         <div>
-          {dealProducts.length > 0 && (
+
             <>
               <h2 className="text-2xl font-semibold mt-4 mb-2 p">Produkty:</h2> 
               <div className='flex justify-content-left m-3'>
@@ -328,6 +451,14 @@ const DealDetails = () => {
                 }}
                 placeholder='Wybierz ofertę'
                 />
+                {isNewOfferCreationVisible && (
+                  <Button onClick={() => setShowPopup(true)} className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2" id='NewOfferCreationButton'>
+                    Utwórz ofertę z aktywnych produktów
+                  </Button>
+                )}
+                <Dialog header="Zaznaczone produkty" visible={showPopup} style={{ width: '50vw' }} onHide={() => setShowPopup(false)}>
+                {renderSelectedProducts()}
+              </Dialog>
                 <Button
                     className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2"
                     onClick={activateOffer}
@@ -359,10 +490,13 @@ const DealDetails = () => {
                 <Column field="comments" style={{ width: '25%' }} header="Komentarz" onCellEditComplete={onCellEditComplete} editor={(options) => textEditor(options, '450px', 'text')} />
               </DataTable>
             </>
-          )}
         </div>
         <div className='m-3 '>
-          <button onClick={saveDealProducts} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded cursor-pointer mr-4">Zapisz</button>
+          {isActiveOffer && (
+            <button onClick={saveDealProducts} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded cursor-pointer mr-4">
+              Zapisz
+            </button>
+          )}
           <button onClick={() => router.push(`/addProduct/${id}`)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
             Dodaj produkt/ofertę
           </button>

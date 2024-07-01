@@ -10,7 +10,7 @@ const log = logger('Post Deal Products API 🛍️');
 const handler = async (req, res) => {
   try {
     const client = getAPIClient(req, res);
-    let { dealId, productId, productPrice, comment, discount } = req.body;
+    let { dealId, productId, productPrice, comments, discount } = req.body;
     const API_TOKEN = process.env.PIPEDRIVE_TOKEN;
     
     log.info(req.body);
@@ -26,7 +26,7 @@ const handler = async (req, res) => {
         "product_id": productId,
         "item_price": productPrice || 0,
         "quantity": 1,
-        "comment": comment || null,
+        "comments": comments || null,
         "discount": discount || 0
       }),
     });

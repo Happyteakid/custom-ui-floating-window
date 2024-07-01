@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -13,6 +13,7 @@ import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
 import { Dialog } from 'primereact/dialog';
+import { Toast } from 'primereact/toast';
 
 const DealDetails = () => {
   const router = useRouter();
@@ -30,6 +31,8 @@ const DealDetails = () => {
   const [isNewOfferCreationVisible, setIsNewOfferCreationVisible] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [offerTitle, setOfferTitle] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const toast = useRef(null);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -393,7 +396,58 @@ const DealDetails = () => {
     );
   };
 
-  
+  async function addOfferToDeal() {
+    if (isCreating || !activeProducts.length) return;
+    
+    if (!offerTitle.trim()) {
+      toast.current.show({ severity: 'error', summary: 'Error', detail: 'Tytuł oferty jest wymagany', life: 3000 });
+      return;
+    }
+
+    setIsCreating(true);
+    const offerPayload = {
+      id: id,
+      offerString: JSON.stringify({
+        na: offerTitle,
+        ac: true,
+        pr: activeProducts.map(product => ({
+          pId: product.product_id,
+          dPId: product.id,
+          pPr: product["sum"],
+          pCo: product.comment || "",
+          pCn: 1,
+          pCu: "EUR",
+          pDi: 0
+        }))
+      })
+    };
+    console.log('offerPayload: ', offerPayload);
+    try {
+      const response = await fetch('/api/postDealOffer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(offerPayload),
+      });
+
+      if (!response.ok) {
+        toast.current.show({ severity: 'error', summary: 'Error', detail: 'Nie udało się stworzyć oferty.', life: 3000 });
+        throw new Error(`Failed to post deal offer: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Offer created successfully', data);
+
+    } catch (error) {
+      console.error('Error posting deal offer:', error);
+    } finally {
+      setIsCreating(false);
+      setShowPopup(false);
+    }
+    toast.current.show({ severity: 'success', summary: 'Success', detail: 'Utworzono pomyślnie ofertę', life: 3000 });
+    location.reload();
+  }
 
 
   const textEditor = (options, width, type = 'text') => {
@@ -503,6 +557,7 @@ const DealDetails = () => {
         </div>
         <GoBackButton />
       </div>
+      <Toast ref={toast} />
     </div>
   );
 };

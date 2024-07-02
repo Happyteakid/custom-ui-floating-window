@@ -1,14 +1,9 @@
-//postDealOffer.js
 import { DealsApi, DealFieldsApi } from 'pipedrive';
 import logger from '../../shared/logger';
 import { getAPIClient } from '../../shared/oauth';
 
 const log = logger('Update Deal Offer API 📝');
 
-/**
- * Update the deal in Pipedrive
- * Return the response
- */
 const handler = async (req, res) => {
   try {
     const offer = req.body;
@@ -39,8 +34,14 @@ const handler = async (req, res) => {
       currentOffers = JSON.parse(currentDeal[offerExpressionKey]);
     }
 
-    // Append the new offer
-    currentOffers.push(offer.offerString);
+    // Determine the next o_id
+    const nextOId = currentOffers.length ? Math.max(...currentOffers.map(o => o.o_id || 0)) + 1 : 1;
+
+    // Append the new offer with the o_id
+    currentOffers.push({
+      ...JSON.parse(offer.offerString),
+      o_id: nextOId
+    });
 
     // Update the deal
     log.info('Request body: ', offer);

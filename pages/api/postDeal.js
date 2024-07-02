@@ -4,13 +4,9 @@ import { getAPIClient } from '../../shared/oauth';
 
 const log = logger('Update Deal API 📝');
 
-/**
- * Update the deal in Pipedrive
- * Return the response
- */
 const handler = async (req, res) => {
   try {
-    const d = req.body;
+    const { id, offerString } = req.body;
     const client = getAPIClient(req, res);
     log.info('Initializing client');
     
@@ -33,11 +29,11 @@ const handler = async (req, res) => {
 
     // Prepare the update data
     const updateData = {
-      [offerExpressionKey]: JSON.stringify(d.offerString)
+      [offerExpressionKey]: JSON.stringify(offerString) // Stringify only here
     };
 
     log.info('Updating deal');
-    const updatedDeal = await dealsApi.updateDeal(d.id, updateData);
+    const updatedDeal = await dealsApi.updateDeal(id, updateData);
 
     const deal = updatedDeal.data;
 

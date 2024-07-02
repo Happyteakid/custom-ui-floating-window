@@ -41,27 +41,22 @@ const DealDetails = () => {
           const { detailsArray, offerListArray } = await fetchDealDetails(id);
           setDealDetailsForTable(detailsArray);
           console.log('Oferta offerListArray:', offerListArray);
+  
           if (offerListArray.length > 0) {
-            // Parse the JSON strings to objects
-            const offers = offerListArray.map(offer => JSON.parse(offer));
-            
-            setOffers(offers);
-            // Extract the offer names
-            const offerNames = offers.map(offer => offer.na);
-            
-            // Update the state with the offer names
+            setOffers(offerListArray);
+            const offerNames = offerListArray.map(offer => offer.na);
             setOfertaDropdown(offerNames);
           }
-
+  
           const { productsWithPrices, totalFetchedSum, percentageDiff } = await fetchDealProducts(id);
           setDealProducts(productsWithPrices);
           setActiveProducts(productsWithPrices);
           setSum(totalFetchedSum);
           setPercentageDifference(percentageDiff);
-
+  
           // Check for active offer and set ofertaDropdownValue
           let matchingOfferFound = false;
-          for (const offer of offerListArray.map(offer => JSON.parse(offer))) { 
+          for (const offer of offerListArray) {
             if (offer.ac) {
               const activeProductIds = productsWithPrices.map(p => p.id);
               const offerProductIds = offer.pr.map(p => p.dPId);
@@ -74,9 +69,9 @@ const DealDetails = () => {
               }
             }
           }
-
+  
           setIsNewOfferCreationVisible(!matchingOfferFound);
-
+  
         } catch (error) {
           console.error("Failed to fetch deal details or products:", error);
         }
@@ -85,6 +80,7 @@ const DealDetails = () => {
   
     fetchData();
   }, [id]);
+  
 
   const loadOfferProducts = async (selectedOffer) => {
     if (selectedOffer === 'None') {
@@ -122,13 +118,12 @@ const DealDetails = () => {
 
   const deleteOffer = async (selectedOffer) => {
     const updatedOffers = offers.filter(offer => offer.na !== selectedOffer);
-    const updatedOfferStrings = updatedOffers.map(offer => JSON.stringify(offer));
-
+  
     const requestBody = {
       id,
-      offerString: updatedOfferStrings
+      offerString: updatedOffers // Send as JSON object
     };
-
+  
     try {
       const response = await fetch('/api/postDeal', {
         method: 'POST',
@@ -137,14 +132,14 @@ const DealDetails = () => {
         },
         body: JSON.stringify(requestBody),
       });
-
+  
       if (!response.ok) {
         throw new Error(`Failed to delete offer: ${response.statusText}`);
       }
-
+  
       const data = await response.json();
       console.log('Offer deleted successfully', data);
-
+  
       setOffers(updatedOffers);
       setOfertaDropdown(updatedOffers.map(offer => offer.na));
       setOfertaDropdownValue(null);
@@ -155,6 +150,7 @@ const DealDetails = () => {
     }
     location.reload();
   };
+  
 
   const onCellEditComplete = (e) => {
     console.log('event', e);
@@ -221,11 +217,10 @@ const DealDetails = () => {
         return offer;
       });
   
-      const updatedOfferStrings = updatedOffers.map(offer => JSON.stringify(offer));
-  
+      // Do not stringify each offer here
       const requestBodyUpdateOfferExpression = {
         id,
-        offerString: updatedOfferStrings
+        offerString: updatedOffers
       };
   
       console.log('requestBodyUpdateOfferExpression', requestBodyUpdateOfferExpression);
@@ -235,7 +230,7 @@ const DealDetails = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBodyUpdateOfferExpression),
+        body: JSON.stringify(requestBodyUpdateOfferExpression), // Stringify the whole body
       });
   
       if (!response.ok) {
@@ -249,6 +244,8 @@ const DealDetails = () => {
       console.error('Error saving deal products:', error);
     }
   };
+  
+  
   
   
 

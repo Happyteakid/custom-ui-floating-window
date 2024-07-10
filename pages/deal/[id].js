@@ -32,6 +32,7 @@ const DealDetails = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [offerTitle, setOfferTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState(null);
   const toast = useRef(null);
   
   useEffect(() => {
@@ -63,6 +64,7 @@ const DealDetails = () => {
               const match = offerProductIds.every(pId => activeProductIds.includes(pId));
               if (match) {
                 setOfertaDropdownValue(offer.na);
+                setSelectedOffer(offer);
                 setIsActiveOffer(true);
                 matchingOfferFound = true;
                 break;
@@ -194,8 +196,7 @@ const DealDetails = () => {
   
       const data = await Promise.all(responses.map(res => res.json()));
       console.log('Save responses:', data);
-  
-      // Update OfferExpression field with updated price, discount, and comments
+
       const updatedOffers = offers.map(offer => {
         if (offer.na === ofertaDropdownValue) {
           return {
@@ -216,8 +217,7 @@ const DealDetails = () => {
         }
         return offer;
       });
-  
-      // Do not stringify each offer here
+
       const requestBodyUpdateOfferExpression = {
         id,
         offerString: updatedOffers
@@ -230,7 +230,7 @@ const DealDetails = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBodyUpdateOfferExpression), // Stringify the whole body
+        body: JSON.stringify(requestBodyUpdateOfferExpression),
       });
   
       if (!response.ok) {
@@ -275,12 +275,9 @@ const DealDetails = () => {
             }
           }));
         }
-
-        
   
         // Save new deal products from selected offer
         const responses = await Promise.all(selectedOffer.pr.map(async (product) => {
-
           let requestBody = {
             dealId: id,
             productId: product.pId,
@@ -342,11 +339,9 @@ const DealDetails = () => {
           }
         });
   
-        const updatedOfferStrings = updatedOffers.map(offer => JSON.stringify(offer));
-        
         const requestBodyUpdateOfferExpression = {
           id,
-          offerString: updatedOfferStrings
+          offerString: updatedOffers // Send as JSON object
         };
   
         console.log('requestBodyUpdateOfferExpression', requestBodyUpdateOfferExpression);
@@ -371,6 +366,7 @@ const DealDetails = () => {
       console.error('Error activating offer:', error);
     }
   };
+  
 
   const renderSelectedProducts = () => {
     console.log('Button clicked, activeProducts', activeProducts);
@@ -492,15 +488,17 @@ const DealDetails = () => {
               <h2 className="text-2xl font-semibold mt-4 mb-2 p">Produkty:</h2> 
               <div className='flex justify-content-left m-3'>
                 <Dropdown
-                id='ofertaDropdown'
-                className='m-2'
-                value={ofertaDropdownValue}
-                options={ofertaDropdown}
-                onChange={(e) => {
-                  setOfertaDropdownValue(e.value);
-                  loadOfferProducts(e.value);
-                }}
-                placeholder='Wybierz ofertę'
+                  id='ofertaDropdown'
+                  className='m-2'
+                  value={ofertaDropdownValue}
+                  options={ofertaDropdown}
+                  onChange={(e) => {
+                    setOfertaDropdownValue(e.value);
+                    loadOfferProducts(e.value);
+                    const selected = offers.find(offer => offer.na === e.value);
+                    setSelectedOffer(selected);
+                  }}
+                  placeholder='Wybierz ofertę'
                 />
                 {isNewOfferCreationVisible && (
                   <Button onClick={() => setShowPopup(true)} className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2" id='NewOfferCreationButton'>
@@ -508,14 +506,14 @@ const DealDetails = () => {
                   </Button>
                 )}
                 <Dialog header="Zaznaczone produkty" visible={showPopup} style={{ width: '50vw' }} onHide={() => setShowPopup(false)}>
-                {renderSelectedProducts()}
-              </Dialog>
+                  {renderSelectedProducts()}
+                </Dialog>
                 <Button
                     className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2"
                     onClick={activateOffer}
                   >
                     Aktywuj ofertę w szansie sprzedaży
-                  </Button>
+                </Button>
                 {ofertaDropdownValue && (
                   <Button
                     className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2"
@@ -526,10 +524,10 @@ const DealDetails = () => {
                 )}
               </div>
               <div className='m-2 font-semibold flex text-xl '>
-              <InputSwitch className='mr-2' checked={fullScreen} onChange={(e) => setFullScreen(e.value)} /> Pełen ekran
+                <InputSwitch className='mr-2' checked={fullScreen} onChange={(e) => setFullScreen(e.value)} /> Pełen ekran
               </div>
               <DataTable id='productList' value={dealProducts} scrollable scrollHeight={fullScreen ? '5500px' : '300px'} editMode="cell">
-              <Column headerStyle={{ width: '3em' }}></Column>
+                <Column headerStyle={{ width: '3em' }}></Column>
                 <Column field="id" header="ID" />
                 <Column field="name" style={{ width: '25%' }} header="Nazwa produktu" />
                 <Column field="item_price" header="Cena" onCellEditComplete={onCellEditComplete} editor={(options) => textEditor(options, '120px', 'number')} />
@@ -548,7 +546,17 @@ const DealDetails = () => {
               Zapisz
             </button>
           )}
-          <button onClick={() => router.push(`/addProduct/${id}`)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
+          <button
+            onClick={() => {
+              if (selectedOffer) {
+                router.push(`/addProduct/addProductToOffer/${id}?o_id=${selectedOffer.o_id}`);
+              } else {
+                router.push(`/addProduct/${id}`);
+              }
+            }}
+            id="AddOfferButton"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+          >
             Dodaj produkt/ofertę
           </button>
         </div>

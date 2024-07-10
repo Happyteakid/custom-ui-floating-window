@@ -13,6 +13,7 @@ import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { FloatLabel } from 'primereact/floatlabel';
 import { Toast } from 'primereact/toast';
+import { fetchDealDetails, fetchProductDetails } from '../../../utils/fetchDealData';
 
 const addProductToOffer = () => {
   const router = useRouter();
@@ -28,9 +29,10 @@ const addProductToOffer = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [offerTitle, setOfferTitle] = useState('');
+  const [offers, setOffers] = useState([]); // Define offers state
   const toast = useRef(null);
 
-  console.log('o_id: ', o_id, dealId);
+  console.log('o_id, dealId: ', o_id, dealId);
 
   const companyOptions = [
     { label: 'HTM', value: 'HTM' },
@@ -58,8 +60,19 @@ const addProductToOffer = () => {
   };
 
   useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const { detailsArray, offerListArray } = await fetchDealDetails(dealId);
+        setOffers(offerListArray);
+        console.log('offerListArray',offerListArray);
+      } catch (error) {
+        console.error('Error fetching deal offers:', error);
+      }
+    };
+    
     if (dealId) {
       fetchDealProducts();
+      fetchOffers();
     }
   }, [dealId]);
 
@@ -134,6 +147,88 @@ const addProductToOffer = () => {
     });
     return keyToNameMapping;
   };
+
+  const addProductsToDeal = async () => {
+    if (!selectedProducts.length) return;
+  
+    const requestBody = selectedProducts.map(product => ({
+      dealId,
+      productId: product.ID,
+      productPrice: product["Cennik sprzedaży"],
+      discount: 0,
+      comments: product.comment || ""
+    }));
+  console.log('requestBody', requestBody);
+    try {
+      // If the offer is active, also add products to the deal
+      
+      if (offers.some(offer => offer.o_id === parseInt(o_id) && offer.ac)) {
+        await Promise.all(requestBody.map(async (product) => {
+          const response = await fetch('/api/postDealProducts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(product),
+          });
+  
+          if (!response.ok) {
+            throw new Error(`Failed to save product: ${response.statusText}`);
+          }
+  
+          return response.json();
+        }));
+      }
+  
+      // Update offer expression
+      const updatedOffers = offers.map(offer => {
+        if (offer.o_id === parseInt(o_id)) {
+          return {
+            ...offer,
+            pr: [
+              ...offer.pr,
+              ...selectedProducts.map(product => ({
+                pId: product.ID,
+                dPId: "null",
+                pPr: product["Cennik sprzedaży"],
+                pCo: product.comment || "",
+                pCn: 1,
+                pCu: "EUR",
+                pDi: 0
+              }))
+            ]
+          };
+        }
+        return offer;
+      });
+  
+      const requestBodyUpdateOfferExpression = {
+        id: dealId,
+        offerString: updatedOffers
+      };
+  
+      const response = await fetch('/api/postDeal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBodyUpdateOfferExpression),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to update offer expression: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+      console.log('Offer expression updated successfully', data);
+      
+      await fetchDealProducts();
+
+    } catch (error) {
+      console.error('Error adding products to deal:', error);
+    }
+  };
+  
 
   function updateProductsWithFieldValues(products, fields) {
     const fieldMappings = buildFieldMappings(fields);
@@ -225,6 +320,7 @@ const addProductToOffer = () => {
             icon="pi pi-plus"
             className="p-button m-3"
             onClick={() => addProductsToDeal()}
+            id='addProductsToOfferButton'
           />
           <Button className='p-button m-3 bg-yellow-500' onClick={() => setShowPopup(true)} icon="pi pi-plus" label="Utwórz ofertę" />
           <Dialog header="Zaznaczone produkty" visible={showPopup} style={{ width: '50vw' }} onHide={() => setShowPopup(false)}>

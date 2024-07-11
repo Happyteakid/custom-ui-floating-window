@@ -23,7 +23,7 @@ const DealDetails = () => {
   const [sum, setSum] = useState(0);
   const [percentageDifference, setPercentageDifference] = useState(0);
   const [fullScreen, setFullScreen] = useState(false);
-  const [ofertaDropdown, setOfertaDropdown] = useState(['Brak ofert']);
+  const [ofertaDropdown, setOfertaDropdown] = useState([]);
   const [ofertaDropdownValue, setOfertaDropdownValue] = useState(null);
   const [offers, setOffers] = useState([]);
   const [activeProducts, setActiveProducts] = useState(null);
@@ -45,7 +45,10 @@ const DealDetails = () => {
   
           if (offerListArray.length > 0) {
             setOffers(offerListArray);
-            const offerNames = offerListArray.map(offer => offer.na);
+            const offerNames = offerListArray.map(offer => ({
+              label: offer.na,
+              value: offer.na
+            }));
             setOfertaDropdown(offerNames);
           }
   
@@ -143,7 +146,10 @@ const DealDetails = () => {
       console.log('Offer deleted successfully', data);
   
       setOffers(updatedOffers);
-      setOfertaDropdown(updatedOffers.map(offer => offer.na));
+      setOfertaDropdown(updatedOffers.map(offer => ({
+        label: offer.na,
+        value: offer.na
+      })));
       setOfertaDropdownValue(null);
       setDealProducts([]);
       setIsNewOfferCreationVisible(true);
@@ -487,19 +493,24 @@ const DealDetails = () => {
             <>
               <h2 className="text-2xl font-semibold mt-4 mb-2 p">Produkty:</h2> 
               <div className='flex justify-content-left m-3'>
-                <Dropdown
-                  id='ofertaDropdown'
-                  className='m-2'
-                  value={ofertaDropdownValue}
-                  options={ofertaDropdown}
-                  onChange={(e) => {
-                    setOfertaDropdownValue(e.value);
-                    loadOfferProducts(e.value);
-                    const selected = offers.find(offer => offer.na === e.value);
-                    setSelectedOffer(selected);
-                  }}
-                  placeholder='Wybierz ofertę'
-                />
+              {
+                ofertaDropdown.length > 0 &&(
+              <Dropdown
+                id='ofertaDropdown'
+                className='m-2'
+                value={ofertaDropdownValue}
+                options={ofertaDropdown}
+                onChange={(e) => {
+                  setOfertaDropdownValue(e.value);
+                  loadOfferProducts(e.value);
+                  const selected = offers.find(offer => offer.na === e.value);
+                  setSelectedOffer(selected);
+                }}
+                placeholder='Wybierz ofertę'
+              />
+                )
+              }
+              
                 {isNewOfferCreationVisible && (
                   <Button onClick={() => setShowPopup(true)} className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2" id='NewOfferCreationButton'>
                     Utwórz ofertę z aktywnych produktów
@@ -508,12 +519,16 @@ const DealDetails = () => {
                 <Dialog header="Zaznaczone produkty" visible={showPopup} style={{ width: '50vw' }} onHide={() => setShowPopup(false)}>
                   {renderSelectedProducts()}
                 </Dialog>
-                <Button
+                {
+                  !isActiveOffer && (
+                  <Button
                     className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2"
                     onClick={activateOffer}
                   >
                     Aktywuj ofertę w szansie sprzedaży
-                </Button>
+                </Button>)
+                }
+                
                 {ofertaDropdownValue && (
                   <Button
                     className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 ml-4 px-4 rounded cursor-pointer my-2"

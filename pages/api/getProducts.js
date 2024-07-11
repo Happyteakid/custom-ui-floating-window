@@ -21,7 +21,7 @@ const handler = async (req, res) => {
     log.info('Getting all products');
     while (moreItems) {
       const response = await api.getProducts({
-        limit: limit, //TODO hardcoded limit {limit}
+        limit: limit, 
         start: start,
       });
 

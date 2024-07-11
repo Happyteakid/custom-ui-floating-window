@@ -39,7 +39,7 @@ const ProductsListWithFilter = ({ products, selectedProducts, onSelectionChange,
             filtered = filtered.filter(product => product["Grupa materiałowa"] === grupaMateriałowa);
             const firstFewEntries = filtered.slice(0, 10);
             firstFewEntries.forEach(product => {
-                console.log('Filtered result: ', product["Grupa materiałowa"]); // Should log the property value for the first 10 products
+                console.log('Filtered result: ', product["Grupa materiałowa"]);
             });
             console.log('ProductsListWithFilter grupaMateriałowa', grupaMateriałowa);
         }

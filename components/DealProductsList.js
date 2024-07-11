@@ -6,7 +6,7 @@ import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
 
-const DealProductsList = ({ dealProducts, setDealProducts, dealId }) => {
+const DealProductsList = ({ dealProducts, setDealProducts, dealId, refreshing}) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -68,7 +68,7 @@ const DealProductsList = ({ dealProducts, setDealProducts, dealId }) => {
         <h4 className="text-2xl font-semibold mt-4 mb-2">Produkty w ofercie:</h4>
       </div>
       <DataTable
-        loading={loading}
+        loading={refreshing || loading}
         value={dealProducts}
         responsiveLayout="scroll"
         selection={selectedProducts}

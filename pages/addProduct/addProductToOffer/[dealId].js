@@ -30,6 +30,7 @@ const addProductToOffer = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [offerTitle, setOfferTitle] = useState('');
   const [offers, setOffers] = useState([]); // Define offers state
+  const [refreshing, setRefreshing] = useState(false);
   const toast = useRef(null);
 
   console.log('o_id, dealId: ', o_id, dealId);
@@ -149,8 +150,8 @@ const addProductToOffer = () => {
   };
 
   const addProductsToDeal = async () => {
-    if (!selectedProducts.length) return;
-  
+    if (!selectedProducts.length || refreshing) return;
+    setRefreshing(true);
     const requestBody = selectedProducts.map(product => ({
       dealId,
       productId: product.ID,
@@ -158,10 +159,9 @@ const addProductToOffer = () => {
       discount: 0,
       comments: product.comment || ""
     }));
-  console.log('requestBody', requestBody);
+
     try {
       // If the offer is active, also add products to the deal
-      
       if (offers.some(offer => offer.o_id === parseInt(o_id) && offer.ac)) {
         await Promise.all(requestBody.map(async (product) => {
           const response = await fetch('/api/postDealProducts', {
@@ -180,22 +180,35 @@ const addProductToOffer = () => {
         }));
       }
   
-      // Update offer expression
+      // Fetch updated deal products to get the new deal_product_id (dPId)
+      const updatedDealProductsResponse = await fetch(`/api/getDealProducts?dealId=${dealId}`);
+      if (!updatedDealProductsResponse.ok) {
+        throw new Error(`Failed to fetch updated deal products: ${updatedDealProductsResponse.statusText}`);
+      }
+      let updatedProductsData = await updatedDealProductsResponse.json();
+      if (updatedProductsData && typeof updatedProductsData === 'object' && !Array.isArray(updatedProductsData)) {
+        updatedProductsData = Object.values(updatedProductsData);
+      }
+  
+      // Update offer expression with the new dPId
       const updatedOffers = offers.map(offer => {
         if (offer.o_id === parseInt(o_id)) {
           return {
             ...offer,
             pr: [
               ...offer.pr,
-              ...selectedProducts.map(product => ({
-                pId: product.ID,
-                dPId: "null",
-                pPr: product["Cennik sprzedaży"],
-                pCo: product.comment || "",
-                pCn: 1,
-                pCu: "EUR",
-                pDi: 0
-              }))
+              ...selectedProducts.map(product => {
+                const updatedProduct = updatedProductsData.find(p => p.product_id === product.ID);
+                return {
+                  pId: product.ID,
+                  dPId: updatedProduct ? updatedProduct.id : "null",
+                  pPr: product["Cennik sprzedaży"],
+                  pCo: product.comment || "",
+                  pCn: 1,
+                  pCu: "EUR",
+                  pDi: 0
+                };
+              })
             ]
           };
         }
@@ -223,11 +236,14 @@ const addProductToOffer = () => {
       console.log('Offer expression updated successfully', data);
       
       await fetchDealProducts();
-
+  
     } catch (error) {
       console.error('Error adding products to deal:', error);
+      setRefreshing(false);
     }
+    setRefreshing(false);
   };
+  
   
 
   function updateProductsWithFieldValues(products, fields) {
@@ -278,7 +294,7 @@ const addProductToOffer = () => {
     <div className='scrollable-container2'>
       <div className="max-w-4xl mx-auto p-4">
         <h3>Szansy sprzedaży - ID {dealId}</h3>
-        <DealProductsList dealProducts={dealProducts} setDealProducts={setDealProducts} dealId={dealId} />
+        <DealProductsList refreshing={refreshing} dealProducts={dealProducts} setDealProducts={setDealProducts} dealId={dealId} />
         <div className="m-3 text-xl font-bold"> Dodaj produkty</div>
         <div className='flex'>
           <div className="flex justify-content-center m-3">

@@ -154,6 +154,7 @@ const AddProduct = () => {
       return updatedProduct;
     });
   }
+  
 
   const renderSelectedProducts = () => {
     return (
@@ -218,12 +219,6 @@ const AddProduct = () => {
           />
         </div>
         <div>
-          <Button
-            label="Dodaj produkty"
-            icon="pi pi-plus"
-            className="p-button m-3"
-            onClick={() => addProductsToDeal()}
-          />
           <Button className='p-button m-3 bg-yellow-500' onClick={() => setShowPopup(true)} icon="pi pi-plus" label="Utwórz ofertę" />
           <Dialog header="Zaznaczone produkty" visible={showPopup} style={{ width: '50vw' }} onHide={() => setShowPopup(false)}>
             {renderSelectedProducts()}

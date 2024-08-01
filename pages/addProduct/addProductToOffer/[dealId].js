@@ -294,7 +294,7 @@ const addProductToOffer = () => {
     <div className='scrollable-container2'>
       <div className="max-w-4xl mx-auto p-4">
         <h3>Szansy sprzedaży - ID {dealId}</h3>
-        <DealProductsList refreshing={refreshing} dealProducts={dealProducts} setDealProducts={setDealProducts} dealId={dealId} />
+        <DealProductsList refreshing={refreshing} dealProducts={dealProducts} setDealProducts={setDealProducts} dealId={dealId} offerId={o_id} offerListArray={offers} setOfferListArray={setOffers}/>
         <div className="m-3 text-xl font-bold"> Dodaj produkty</div>
         <div className='flex'>
           <div className="flex justify-content-center m-3">

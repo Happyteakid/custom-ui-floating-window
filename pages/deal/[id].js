@@ -14,6 +14,8 @@ import 'primereact/resources/primereact.css';
 import 'primeicons/primeicons.css';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
+import { MultiSelect } from 'primereact/multiselect';
+
 
 const DealDetails = () => {
   const router = useRouter();
@@ -33,6 +35,8 @@ const DealDetails = () => {
   const [offerTitle, setOfferTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState(null);
+  const [uwagiOptions, setUwagiOptions] = useState([]);
+  const [selectedUwagi, setSelectedUwagi] = useState(null);
   const toast = useRef(null);
   
   useEffect(() => {
@@ -40,9 +44,16 @@ const DealDetails = () => {
       if (id) {
         try {
           const { detailsArray, offerListArray } = await fetchDealDetails(id);
+          const dealFields = await fetch(`/api/getDealFields`);
+          const dealUwagi = await dealFields.json();
           setDealDetailsForTable(detailsArray);
-          console.log('Oferta offerListArray:', offerListArray);
-  
+
+          // Extract Uwagi options
+          const uwagiField = dealUwagi.find(field => field.name == "Uwagi");
+          if (uwagiField && uwagiField.options) {
+            setUwagiOptions(uwagiField.options.map(option => ({ label: option.label, value: option.id })));
+          }
+
           if (offerListArray.length > 0) {
             setOffers(offerListArray);
             const offerNames = offerListArray.map(offer => ({
@@ -57,8 +68,7 @@ const DealDetails = () => {
           setActiveProducts(productsWithPrices);
           setSum(totalFetchedSum);
           setPercentageDifference(percentageDiff);
-  
-          // Check for active offer and set ofertaDropdownValue
+
           let matchingOfferFound = false;
           for (const offer of offerListArray) {
             if (offer.ac) {
@@ -126,7 +136,7 @@ const DealDetails = () => {
   
     const requestBody = {
       id,
-      offerString: updatedOffers // Send as JSON object
+      offerString: updatedOffers
     };
   
     try {
@@ -448,6 +458,48 @@ const DealDetails = () => {
     location.reload();
   }
 
+// Function to format selected Uwagi without extra quotes or "\n"
+const formatSelectedUwagi = (selectedUwagi, uwagiOptions) => {
+  return selectedUwagi
+    .map((id, index) => `${index + 1}. ${uwagiOptions.find(option => option.value === id)?.label || ''}`)
+    .join('\n'); // Join with actual newlines
+};
+
+// Function to save Uwagi
+const saveUwagi = async () => {
+  if (!selectedUwagi || selectedUwagi.length === 0) {
+    toast.current.show({ severity: 'error', summary: 'Error', detail: 'Wybierz uwagi przed zapisem', life: 3000 });
+    return;
+  }
+
+  const formattedUwagi = formatSelectedUwagi(selectedUwagi, uwagiOptions);
+
+  const requestBody = {
+    id,
+    uwagiString: formattedUwagi
+  };
+
+  try {
+    const response = await fetch('/api/postDeal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to save Uwagi: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    toast.current.show({ severity: 'success', summary: 'Success', detail: 'Uwagi zapisane pomyślnie', life: 3000 });
+    console.log('Uwagi saved successfully', data);
+  } catch (error) {
+    console.error('Error saving Uwagi:', error);
+    toast.current.show({ severity: 'error', summary: 'Error', detail: 'Nie udało się zapisać uwag.', life: 3000 });
+  }
+};
 
   const textEditor = (options, width, type = 'text') => {
     return (
@@ -465,14 +517,53 @@ const DealDetails = () => {
     );
   };
 
+  const handleUwagiChange = (e) => {
+    setSelectedUwagi(e.value);
+    console.log('Selected Uwagi:', e.value);
+  };
+
   return (
     <div className='scrollable-container2'>
       <div className="max-w-4xl mx-auto p-4">
         <h1 className="text-3xl font-bold mb-4">ID {id} - Szansa sprzedaży</h1>
-        <DataTable value={dealDetailsForTable} style={{ maxWidth: fullScreen ? '0px' : '500px', maxHeight: fullScreen ? '0px' : '500px', visibility: fullScreen ? 'hidden' : 'visible' }} >
-          <Column field="label" header="Pole" className="fw-bold" />
-          <Column field="value" header="Wartość" />
-        </DataTable>
+        <div className="flex justify-between">
+    <DataTable 
+        id='dealDetails' 
+        value={dealDetailsForTable} 
+        style={{ maxWidth: fullScreen ? '0px' : '500px', maxHeight: fullScreen ? '0px' : '500px', visibility: fullScreen ? 'hidden' : 'visible' }} 
+    >
+        <Column field="label" header="Pole" className="fw-bold" />
+        <Column field="value" header="Wartość" />
+    </DataTable>
+    <div className="flex flex-column">
+      {uwagiOptions.length > 0 && (
+        <>
+        <button onClick={saveUwagi} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded cursor-pointer mr-4 mb-2 ml-4">
+              Zapisz uwagi
+            </button>
+          <MultiSelect
+            id="uwagiDropdown"
+            value={selectedUwagi}
+            options={uwagiOptions}
+            onChange={handleUwagiChange}
+            placeholder='Wybierz uwagi'
+            display="chip"
+            className='w-30rem mb-4' // Added margin to separate from the table below
+            filter
+            style={{ minWidth: '300px', maxWidth: '500px' }}
+          />
+          <DataTable
+            id='uwagiTable'
+            value={uwagiOptions.filter(option => selectedUwagi && selectedUwagi.includes(option.value))}
+            style={{ minWidth: '300px', maxWidth: '500px' }}
+          >
+            <Column field="value" header="Nr" className="fw-bold" />
+            <Column field="label" header="Uwaga" />
+          </DataTable>
+        </>
+      )}
+    </div>
+      </div>
         {percentageDifference < 8 && (
           <Button className='p-button-success m-2 fw-bold' tooltip="Twoja oferta spełnia kryteria.">
             Możliwe wysyłanie ofert
@@ -489,7 +580,6 @@ const DealDetails = () => {
           </Button>
         )}
         <div>
-
             <>
               <h2 className="text-2xl font-semibold mt-4 mb-2 p">Produkty:</h2> 
               <div className='flex justify-content-left m-3'>
@@ -558,7 +648,7 @@ const DealDetails = () => {
         <div className='m-3 '>
           {isActiveOffer && (
             <button onClick={saveDealProducts} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded cursor-pointer mr-4">
-              Zapisz
+              Zapisz ofertę
             </button>
           )}
           <button

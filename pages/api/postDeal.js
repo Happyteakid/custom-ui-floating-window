@@ -6,7 +6,7 @@ const log = logger('Update Deal API 📝');
 
 const handler = async (req, res) => {
   try {
-    const { id, offerString } = req.body;
+    const { id, offerString, uwagiString } = req.body;
     const client = getAPIClient(req, res);
     log.info('Initializing client');
     
@@ -25,12 +25,26 @@ const handler = async (req, res) => {
       throw new Error('OfferExpression field not found');
     }
 
-    const offerExpressionKey = offerExpressionField.key;
+    const uwagiTextField = dealFields.find(field => field.name === 'UwagiText');
+    if (!uwagiTextField) {
+      throw new Error('uwagiTextField field not found');
+    } 
 
-    // Prepare the update data
-    const updateData = {
-      [offerExpressionKey]: JSON.stringify(offerString) // Stringify only here
-    };
+    const offerExpressionKey = offerExpressionField.key;
+    const uwagiTextFieldKey = uwagiTextField.key;
+    let updateData = null;
+
+    if(uwagiString == null || uwagiString == ''){
+      updateData = {
+        [offerExpressionKey]: JSON.stringify(offerString),
+      };
+    } else {
+      updateData = {
+        [offerExpressionKey]: JSON.stringify(offerString),
+        [uwagiTextFieldKey]: JSON.stringify(uwagiString)
+      };
+    }
+
 
     log.info('Updating deal');
     const updatedDeal = await dealsApi.updateDeal(id, updateData);

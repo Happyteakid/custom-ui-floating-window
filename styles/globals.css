@@ -164,6 +164,20 @@ img {
   width: 100%; /* Or any other width depending on your layout */
 }
 
+.flex {
+  display: flex;
+  align-items: flex-start;
+}
+
+#dealDetails {
+  flex-grow: 1;
+}
+
+#uwagiDropdown {
+  margin-left: 16px; /* Ensure there's space between the dropdown and the table */
+  min-width: 300px; /* Ensure the dropdown has enough width */
+}
+
 .centered-flex {
   display: flex;
   justify-content: center;

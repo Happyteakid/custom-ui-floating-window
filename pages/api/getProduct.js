@@ -13,7 +13,7 @@ const handler = async (req, res) => {
     const client = getAPIClient(req, res);
     const api = new ProductsApi(client);
 
-    const { productIds } = req.body; // Assuming product IDs are passed in the request body
+    const { productIds } = req.body;
     log.info(`Getting products with ids: ${productIds}`);
 
     const products = await Promise.all(
@@ -22,7 +22,7 @@ const handler = async (req, res) => {
         return {
           id: product.data.id,
           name: product.data.name,
-          price: product.data.prices[0]?.price || null, // Extracting the first price
+          price: product.data.prices[0]?.price || null,
           currency: product.data.prices[0]?.currency || null,
         };
       })

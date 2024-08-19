@@ -48,7 +48,6 @@ const ContactList = (props) => {
           />
         </div>
         <ol className="contact-list list-group">
-          {/* List the contacts based on the API response */}
           {contacts.map((d) => (
             <li
               key={d.contactId}

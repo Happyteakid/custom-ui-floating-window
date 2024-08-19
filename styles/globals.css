@@ -46,35 +46,35 @@ a {
 }
 
 .bg-blue {
-  background-color: #007bff; /* A commonly used blue shade */
+  background-color: #007bff;
 }
 
 .bg-red {
-  background-color: #ff4d4f; /* A bright red */
+  background-color: #ff4d4f;
 }
 
 .bg-orange {
-  background-color: #ffa940; /* A vibrant orange */
+  background-color: #ffa940; 
 }
 
 .bg-yellow {
-  background-color: #ffec3d; /* A sunny yellow */
+  background-color: #ffec3d; 
 }
 
 .bg-purple {
-  background-color: #9254de; /* A deep purple */
+  background-color: #9254de;
 }
 
 .bg-teal {
-  background-color: #00adb5; /* A soothing teal */
+  background-color: #00adb5;
 }
 
 .bg-pink {
-  background-color: #ff85c0; /* A soft pink */
+  background-color: #ff85c0;
 }
 
 .bg-gray {
-  background-color: #8c8c8c; /* A neutral gray */
+  background-color: #8c8c8c;
 }
 
 nav .navbar-brand {
@@ -144,7 +144,7 @@ img {
 }
 
 .scrollable-container {
-  max-height: 500px; /* Adjust based on your preference */
+  max-height: 500px;
   overflow-y: auto;
 }
 
@@ -153,15 +153,13 @@ img {
   overflow-y: auto;
 }
 
-/* Targeting the dropdown panel */
 .p-dropdown-panel {
-  left: 15 !important; /* Adjust this value as needed to fit your layout */
-  width: auto !important; /* This ensures that the dropdown takes up only as much width as necessary */
+  left: 15 !important;
+  width: auto !important; 
 }
 
-/* Adjust the width of the dropdown itself if needed */
 .custom-dropdown .p-dropdown {
-  width: 100%; /* Or any other width depending on your layout */
+  width: 100%; 
 }
 
 .flex {
@@ -174,8 +172,8 @@ img {
 }
 
 #uwagiDropdown {
-  margin-left: 16px; /* Ensure there's space between the dropdown and the table */
-  min-width: 300px; /* Ensure the dropdown has enough width */
+  margin-left: 16px; 
+  min-width: 300px; 
 }
 
 .centered-flex {
@@ -190,20 +188,20 @@ img {
 }
 
 .custom-dropdown {
-  width: 100%; /* Responsive width */
-  max-width: 280px; /* Maximum width */
-  font-size: 1rem; /* Adjust font size as needed */
-  padding: 0.5rem; /* Padding for better text visibility */
-  border: 1px solid #ccc; /* Subtle border */
-  border-radius: 4px; /* Rounded corners */
+  width: 100%;
+  max-width: 280px;
+  font-size: 1rem; 
+  padding: 0.5rem; 
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 .custom-dropdown .p-dropdown-label {
-  line-height: 1.25rem;  /* Adjust this value based on your specific needs */
-  padding: 0.5rem 1rem;  /* Provides padding inside the dropdown */
-  display: flex;         /* Ensures the content can be flexibly aligned */
-  align-items: center;   /* Vertically centers the label text */
-  width: 100%;           /* Ensures the label uses the full width of the dropdown */
+  line-height: 1.25rem;  
+  padding: 0.5rem 1rem; 
+  display: flex;        
+  align-items: center;  
+  width: 100%;          
 }
 
 .fullscreen-table {

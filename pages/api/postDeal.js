@@ -41,7 +41,7 @@ const handler = async (req, res) => {
     } else {
       updateData = {
         [offerExpressionKey]: JSON.stringify(offerString),
-        [uwagiTextFieldKey]: JSON.stringify(uwagiString)
+        [uwagiTextFieldKey]: uwagiString
       };
     }
 

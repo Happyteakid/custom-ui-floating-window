@@ -18,28 +18,26 @@ const handler = async (req, res) => {
     let allDeals = [];
     let moreItems = true;
     let start = 0;
-    const limit = 500; // Adjust based on API capabilities
+    const limit = 500;
 
     log.info('Getting all deals');
     while (moreItems) {
-      // Adjust this call based on the actual method signature and parameters
       const response = await api.getDeals({
         limit: limit,
         start: start,
-        // include additional parameters here as needed
       });
 
-      const deals = response.data; // Adjust based on actual response structure
+      const deals = response.data; 
       if (deals.length > 0) {
         allDeals = allDeals.concat(deals);
 
         if (deals.length < limit) {
-          moreItems = false; // Exit loop if last page
+          moreItems = false;
         } else {
-          start += limit; // Prepare for next page
+          start += limit;
         }
       } else {
-        moreItems = false; // Exit loop if no deals
+        moreItems = false;
       }
     }
 

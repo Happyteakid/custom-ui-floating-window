@@ -17,10 +17,6 @@ const log = logger('Get Organization API 📚');
       const client = getAPIClient(req, res);
       log.info('Initializing client');
       const api = new OrganizationsApi(client);
-     //log.info(req.body);
-     //log.info(req.body.name);
-     //log.info(req.body["7b4ee6ab150271090998e28fcdf397f97b842435"]);
-     //log.info(req.body.nip);
 
       log.info('Posting organization');
       const newOrganization = await api.addOrganization(

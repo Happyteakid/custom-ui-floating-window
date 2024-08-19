@@ -19,21 +19,16 @@ const handler = async (req, res) => {
 
     if (req.query.id && req.query.id !== 'undefined') {
       log.info(req.query.id, 'Getting contact based on ID');
-      // Let's get the person by ID
       contact = await getContactById(api, req.query.id);
     } else if (req.query.number && req.query.number !== 'undefined') {
       log.info(req.query.number, 'Getting contact based on number search');
-      // Let's get the person by the number
-      // If the contact does not exist in Pipedrive, simply return the contact object
       contact = await getContactByNumber(api, req.query.number);
       if (!contact.existing) return res.status(200).json(contact);
     }
     log.info('Getting associated deals');
-    // Now let's get the associated details if the contact exists in Pipedrive
     const relatedDealObj = await api.getPersonDeals(contact.id);
     const relatedDealsJson = relatedDealObj.data;
     log.info('Returning response');
-    // Prepare the response and send
     const apiResponse = contact;
     apiResponse.relatedDeals = relatedDealsJson;
 

@@ -99,7 +99,6 @@ const DealDetails = () => {
 
   const loadOfferProducts = async (selectedOffer) => {
     if (selectedOffer === 'None') {
-      // Load original active products in the deal
       const { productsWithPrices } = await fetchDealProducts(id);
       setDealProducts(productsWithPrices);
       setIsActiveOffer(true);
@@ -174,7 +173,6 @@ const DealDetails = () => {
     console.log('event', e);
     const { rowData, newValue, field, originalEvent: event } = e;
   
-    // Prevent default behavior to ensure editor callback works correctly
     event.preventDefault();
   
     const updatedProducts = [...dealProducts];
@@ -269,9 +267,9 @@ const DealDetails = () => {
     try {
       const selectedOffer = offers.find(offer => offer.na === ofertaDropdownValue);
       if (selectedOffer) {
-        // Check if there are active products before attempting to delete
+
         if (activeProducts && activeProducts.length > 0) {
-          // Delete current deal products
+
           await Promise.all(activeProducts.map(async (product) => {
             const requestBody = {
               dealId: id,
@@ -291,8 +289,7 @@ const DealDetails = () => {
             }
           }));
         }
-  
-        // Save new deal products from selected offer
+
         const responses = await Promise.all(selectedOffer.pr.map(async (product) => {
           let requestBody = {
             dealId: id,
@@ -317,16 +314,13 @@ const DealDetails = () => {
         }));
   
         console.log('Activate offer responses:', responses);
-  
-        // Fetch updated deal products to get the new deal_product_id (dPId)
+
         const productsResponse = await fetch(`/api/getDealProducts?dealId=${id}`);
         let productsData = await productsResponse.json();
         console.log('fetchDealProducts productsData: ', productsData);
-  
-        // Convert productsData to an array
+
         productsData = Object.values(productsData);
-  
-        // Update OfferExpression field with new dPId and Active status
+
         const updatedOffers = offers.map(offer => {
           if (offer.na === ofertaDropdownValue) {
             return {
@@ -458,14 +452,12 @@ const DealDetails = () => {
     location.reload();
   }
 
-// Function to format selected Uwagi without extra quotes or "\n"
 const formatSelectedUwagi = (selectedUwagi, uwagiOptions) => {
   return selectedUwagi
     .map((id, index) => `${index + 1}. ${uwagiOptions.find(option => option.value === id)?.label || ''}`)
-    .join('\n'); // Join with actual newlines
+    .join('\n'); 
 };
 
-// Function to save Uwagi
 const saveUwagi = async () => {
   if (!selectedUwagi || selectedUwagi.length === 0) {
     toast.current.show({ severity: 'error', summary: 'Error', detail: 'Wybierz uwagi przed zapisem', life: 3000 });
@@ -509,7 +501,7 @@ const saveUwagi = async () => {
         style={{ width }}
         onChange={(e) => {
           options.editorCallback(e.target.value);
-          console.log('Changed value:', e.target.value); // Log each change
+          console.log('Changed value:', e.target.value); 
         }}
         disabled={!isActiveOffer}
         tooltip={!isActiveOffer ? 'Cannot edit price, discount, or comments for an inactive offer' : ''}
@@ -548,14 +540,14 @@ const saveUwagi = async () => {
             onChange={handleUwagiChange}
             placeholder='Wybierz uwagi'
             display="chip"
-            className='w-30rem mb-4' // Added margin to separate from the table below
+            className='w-30rem mb-4'
             filter
             style={{ minWidth: '300px', maxWidth: '500px' }}
           />
           <DataTable
             id='uwagiTable'
             value={uwagiOptions.filter(option => selectedUwagi && selectedUwagi.includes(option.value))}
-            style={{ minWidth: '300px', maxWidth: '500px' }}
+            style={{ minWidth: '450px', maxWidth: '500px' }}
           >
             <Column field="value" header="Nr" className="fw-bold" />
             <Column field="label" header="Uwaga" />

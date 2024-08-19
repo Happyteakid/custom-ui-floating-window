@@ -11,8 +11,7 @@ const log = logger('Get Deal API 📚');
  */
 const handler = async (req, res) => {
   try {
-    // Extract the deal ID from the request parameters
-    const { dealId } = req.query; // Make sure this matches how you're passing the deal ID in your request
+    const { dealId } = req.query;
 
     if (!dealId) {
       return res.status(400).json({ success: false, data: 'No deal ID provided' });

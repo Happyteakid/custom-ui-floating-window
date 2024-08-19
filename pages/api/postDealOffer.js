@@ -34,7 +34,6 @@ const handler = async (req, res) => {
       currentOffers = JSON.parse(currentDeal[offerExpressionKey]);
     }
 
-    // Determine the next o_id
     const nextOId = currentOffers.length ? Math.max(...currentOffers.map(o => o.o_id || 0)) + 1 : 1;
 
     // Append the new offer with the o_id

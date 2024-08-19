@@ -15,8 +15,6 @@ const handler = async (req, res) => {
     log.info('Getting all organizations');
     const contactObj = await api.getPersons();
     
-    // Filter only those that have phone number
-    
     log.info('Filtering persons by phone');
     const contacts = contactObj.data
       .filter((person) => {

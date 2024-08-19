@@ -9,7 +9,6 @@ const log = logger('Get Deal Products API 📚');
  */
 const handler = async (req, res) => {
   try {
-    // Extract the deal ID from the request query or parameters
     const { dealId } = req.query;
 
     if (!dealId) {
@@ -22,7 +21,6 @@ const handler = async (req, res) => {
     const api = new DealsApi(client);
 
     log.info(`Getting all products for deal ID: ${dealId}`);
-    // Use getDealProducts function from DealsApi and pass the dealId to it
     const response = await api.getDealProducts(dealId, {});
     const dealProducts = response.data;
 
